@@ -92,9 +92,9 @@ target "base" {
 }
 
 # text-generation-webui images
-target "textgen" {
+target "textgen-webui" {
   inherits   = ["common", "docker-metadata-action"]
-  context    = "./docker/textgen"
+  context    = "./docker/textgen-webui"
   dockerfile = "Dockerfile"
   target     = "webui"
   contexts = {
