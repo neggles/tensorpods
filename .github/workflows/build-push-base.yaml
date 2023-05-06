@@ -8,9 +8,9 @@ on:
       - "release"
     paths:
       - ".github/workflows/build-push-base.yml"
-      - "base/*"
+      - "docker/base/*"
       - "docker-bake.hcl"
-      - "docker-compose.yml"
+      - "docker-compose.base.yml"
       - "!**.md"
 
   workflow_dispatch:
@@ -24,9 +24,9 @@ on:
   pull_request:
     paths:
       - ".github/workflows/build-push-base.yml"
-      - "base/*"
+      - "docker/base/*"
       - "docker-bake.hcl"
-      - "docker-compose.yml"
+      - "docker-compose.base.yml"
       - "!**.md"
 
 defaults:
