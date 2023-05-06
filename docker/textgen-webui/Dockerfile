@@ -34,7 +34,7 @@ WORKDIR /work/textgen
 
 # Install python dependencies
 RUN --mount=type=cache,target=/root/.cache/pip \
-    python -m pip install -r textgen/requirements.txt \
+    python -m pip install -r requirements.txt \
     && python -m pip install \
         'protobuf<3.21.0' \
         huggingface-hub
