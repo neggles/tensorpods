@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-  base:
+  textgen:
     image: ghcr.io/neggles/tensorpods/textgen-webui:latest
     restart: unless-stopped
     command: [ "bash", "-l" ]
@@ -18,5 +18,8 @@ services:
         protocol: tcp
     volumes:
       - type: bind
-        source: ./data/models
+        source: ./data/textgen/models
         target: /work/textgen/models
+      - type: bind
+        source: ./data/textgen
+        target: /data
