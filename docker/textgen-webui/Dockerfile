@@ -60,7 +60,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
         "safetensors==${SAFETENSORS_VERSION}" \
         "datasets==${DATASETS_VERSION}" \
         "accelerate==${ACCELERATE_VERSION}" \
-        "transformers==${TRANSFORMERS_VERSION}" \
+        "${TRANSFORMERS_VERSION}" \
         sentencepiece \
         texttable \
         numpy \
