@@ -70,12 +70,6 @@ target "common" {
   output = [
     "type=docker",
   ]
-  cache-from = [
-    "type=local,src=temp/cache,tag=${IMAGE_NAMESPACE}/base",
-  ]
-  cache-to = [
-    "type=local,dest=temp/cache,tag=${IMAGE_NAMESPACE}/base,compression=zstd,compression-level=6,mode=max",
-  ]
 }
 
 # python3.10 cuda images
