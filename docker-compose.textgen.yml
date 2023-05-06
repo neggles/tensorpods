@@ -13,13 +13,10 @@ services:
       CUDA_MODULE_LOADING: "lazy" #
     ports:
       - mode: ingress
-        target: 6942
-        published: 6942
+        target: 7860
+        published: 7861
         protocol: tcp
     volumes:
       - type: bind
-        source: ./data
-        target: /data
-      - type: bind
-        source: ./output
-        target: /output
+        source: ./data/models
+        target: /work/textgen/models
