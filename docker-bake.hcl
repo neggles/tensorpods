@@ -100,7 +100,7 @@ target "textgen-webui" {
     WEBUI_REPO_REF = "56f6b7052a54b4a8442552ecf4105404684c7bd9"
 
     GPTQ4L_REPO_URL = "https://github.com/qwopqwop200/GPTQ-for-LLaMa"
-    GPTQ4L_REPO_REF = "origin/triton"
+    GPTQ4L_REPO_REF = "triton"
 
     TRANSFORMERS_VERSION = "git+https://github.com/huggingface/transformers.git@main"
     ACCELERATE_VERSION   = "0.18.0"
