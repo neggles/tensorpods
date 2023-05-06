@@ -1,0 +1,10 @@
+/.devcontainer/
+/.devscripts/
+/.git/
+/.github/
+/.vscode/
+/data/
+/output/
+/misc/
+/temp/
+/workspace/
