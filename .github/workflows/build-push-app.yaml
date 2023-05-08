@@ -1,18 +1,23 @@
-name: Base Image
-run-name: Base (via ${{ github.event_name }})
+name: zz-App Image Build
+run-name: ${{ inputs.target-name }} build
 
 on:
-  push:
-    branches:
-      - "main"
-      - "release"
-    paths:
-      - ".github/workflows/build-push-base.yml"
-      - "docker/base/*"
-      - "docker-bake.hcl"
-      - "docker-compose.base.yml"
-      - "!**.md"
-
+  workflow_call:
+    inputs:
+      force-push:
+        description: "push to GHCR"
+        type: boolean
+        required: true
+        default: false
+      target-name:
+        description: "docker-bake target name"
+        type: string
+        required: true
+      target-args:
+        description: "extra build args (json key:value pairs)"
+        type: string
+        required: true
+        default: "{}"
   workflow_dispatch:
     inputs:
       force-push:
@@ -20,27 +25,30 @@ on:
         type: boolean
         required: true
         default: false
-
-  pull_request:
-    paths:
-      - ".github/workflows/build-push-base.yml"
-      - "docker/base/*"
-      - "docker-bake.hcl"
-      - "docker-compose.base.yml"
-      - "!**.md"
+      target-name:
+        description: "docker-bake target name"
+        type: string
+        required: true
+      target-args:
+        description: "extra build args (json key:value pairs)"
+        type: string
+        required: true
+        default: "{}"
 
 defaults:
   run:
     shell: bash
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ inputs.target-name }}
   cancel-in-progress: true
 
 env:
+  BUILDX_VERSION: latest
+  BUILDKIT_IMAGE: moby/buildkit:buildx-stable-1
+
   IMAGE_REGISTRY: ghcr.io
   IMAGE_NAMESPACE: ${{ github.repository }}
-  IMAGE_NAME: base
   IMAGE_PLATFORMS: "linux/amd64"
 
 jobs:
@@ -56,8 +64,8 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - name: "Base Container"
-            target: "base"
+          - name: ${{ inputs.target-name }}
+            target: ${{ inputs.target-name }}
             tags: |
               type=raw,value=latest,enable={{is_default_branch}}
               type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
@@ -65,6 +73,7 @@ jobs:
               type=ref,event=branch
               type=ref,event=tag
               type=ref,event=pr
+            build-args: ${{ fromJSON(inputs.target-args) }}
 
     steps:
       - name: Free disk space
@@ -97,13 +106,15 @@ jobs:
       - name: Generate docker tags
         id: meta
         uses: docker/metadata-action@v4
+        env: ${{ matrix.build-args }}
         with:
           images: |
-            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ inputs.target-name }}
           tags: ${{ matrix.tags }}
 
       - name: Save build metadata
         id: dump-meta
+        env: ${{ matrix.build-args }}
         run: |
           docker buildx bake --print \
             -f docker-bake.hcl \
@@ -122,6 +133,7 @@ jobs:
 
       - name: Build & Push Image
         id: build-push
+        env: ${{ matrix.build-args }}
         uses: docker/bake-action@v3
         with:
           targets: ${{ matrix.target }}
@@ -131,4 +143,3 @@ jobs:
           push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.force-push }}
           set: |
             *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
