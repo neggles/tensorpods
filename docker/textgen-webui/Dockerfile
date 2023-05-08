@@ -41,7 +41,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # Clone updated GPTQ-4-Llama
 ARG GPTQ4L_REPO_URL=https://github.com/qwopqwop200/GPTQ-for-LLaMa
-ARG GPTQ4L_REPO_REF=origin/triton
+ARG GPTQ4L_REPO_REF=triton
 RUN mkdir -p repositories \
     && cd repositories \
     && git clone --depth=1 "${GPTQ4L_REPO_URL}" "GPTQ-for-LLaMa" \
@@ -66,3 +66,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
         numpy \
         toml
 
+# force gradio upgrade
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install gradio==3.28.3
