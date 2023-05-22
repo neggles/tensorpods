@@ -51,15 +51,15 @@ RUN mkdir -p repositories \
     && git submodule update --init --recursive
 
 # Install GPTQ4L dependencies (manually)
-ARG TRANSFORMERS_VERSION=4.28.1
-ARG ACCELERATE_VERSION=0.18.0
-ARG DATASETS_VERSION=2.12.0
-ARG SAFETENSORS_VERSION=0.3.1
+ARG TRANSFORMERS_VERSION=transformers==4.28.1
+ARG ACCELERATE_VERSION=accelerate==0.18.0
+ARG DATASETS_VERSION=datasets==2.12.0
+ARG SAFETENSORS_VERSION=safetensors==0.3.1
 RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install \
-        "safetensors==${SAFETENSORS_VERSION}" \
-        "datasets==${DATASETS_VERSION}" \
-        "accelerate==${ACCELERATE_VERSION}" \
+        "${SAFETENSORS_VERSION}" \
+        "${DATASETS_VERSION}" \
+        "${ACCELERATE_VERSION}" \
         "${TRANSFORMERS_VERSION}" \
         sentencepiece \
         texttable \
@@ -68,4 +68,4 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # force gradio upgrade
 RUN --mount=type=cache,target=/root/.cache/pip \
-    python -m pip install gradio==3.28.3
+    python -m pip install 'gradio>=3.28.3'

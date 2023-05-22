@@ -93,11 +93,12 @@ RUN --mount=type=cache,target=/var/cache/apt \
 # Install PyTorch
 ARG TORCH_INDEX
 ARG TORCH_VERSION
+ARG EXTRA_PIP_ARGS
 RUN --mount=type=cache,target=/root/.cache/pip \
-    python3 -m pip install --extra-index-url ${TORCH_INDEX} \
-      "torch==${TORCH_VERSION}" \
+    python3 -m pip install ${EXTRA_PIP_ARGS} \
+      --extra-index-url ${TORCH_INDEX} \
+      "${TORCH_VERSION:-torch}" \
       torchaudio \
-      torchtext \
       torchvision
 
 # Install Triton, xformers, bitsandbytes
@@ -106,11 +107,11 @@ ARG BNB_VERSION
 ARG TRITON_VERSION
 RUN --mount=type=cache,target=/root/.cache/pip \
     python3 -m pip install --no-deps \
-      "triton==${TRITON_VERSION}" \
-      "bitsandbytes==${BNB_VERSION}" \
-      "xformers==${XFORMERS_VERSION}"
+      "${TRITON_VERSION}" \
+      "${BNB_VERSION}" \
+      "${XFORMERS_VERSION}"
 
-# Do a little entrypoint setup
+# we do a little entrypoint setup
 CMD ["/bin/bash", "-l"]
 
 # Specific required versions for everything else will be installed in their respective images

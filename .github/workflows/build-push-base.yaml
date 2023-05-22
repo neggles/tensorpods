@@ -56,7 +56,7 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - name: "Base Container"
+          - name: "Base CUDA 12.1"
             target: "base"
             tags: |
               type=raw,value=latest,enable={{is_default_branch}}
@@ -65,6 +65,16 @@ jobs:
               type=ref,event=branch
               type=ref,event=tag
               type=ref,event=pr
+
+          - name: "Base CUDA 11.8"
+            target: "base-cu118"
+            tags: |
+              type=raw,value=latest,enable={{is_default_branch}},suffix=-cu118
+              type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}},suffix=-cu118
+              type=sha,format=short,suffix=-cu118
+              type=ref,event=branch,suffix=-cu118
+              type=ref,event=tag,suffix=-cu118
+              type=ref,event=pr,suffix=-cu118
 
     steps:
       - name: Free disk space
