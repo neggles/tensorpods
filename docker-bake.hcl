@@ -165,7 +165,7 @@ target "textgen-webui-edge" {
   ]
   args = {
     WEBUI_REPO_URL = "https://github.com/oobabooga/text-generation-webui.git"
-    WEBUI_REPO_REF = "main"
+    WEBUI_REPO_REF = "0db4e191bd9e4e1024c3cb0872096890ed16df25"
 
     GPTQ4L_REPO_URL = "https://github.com/qwopqwop200/GPTQ-for-LLaMa"
     GPTQ4L_REPO_REF = "triton"
