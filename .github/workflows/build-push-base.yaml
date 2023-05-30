@@ -34,7 +34,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-base
   cancel-in-progress: true
 
 env:
@@ -81,8 +81,8 @@ jobs:
         id: free-disk-space
         run: |
           df -h .
-          sudo find /usr/share/dotnet -delete      # frees 20GB on the runner
-          sudo find /usr/local/lib/android -delete # frees 10GB on the runner
+          sudo find /usr/share/dotnet -delete
+          sudo find /usr/local/lib/android -delete
           df -h .
 
       - name: Checkout
@@ -111,24 +111,6 @@ jobs:
           images: |
             ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: ${{ matrix.tags }}
-
-      - name: Save build metadata
-        id: dump-meta
-        run: |
-          docker buildx bake --print \
-            -f docker-bake.hcl \
-            -f ${{ steps.meta.outputs.bake-file }} \
-            ${{ matrix.target }} | tee docker-bake-${{ matrix.target }}.hcl
-
-      - name: Upload build metadata
-        id: upload-meta
-        if: ${{ success() || failure() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: meta-${{ matrix.target }}
-          path: |
-            ${{ steps.meta.outputs.bake-file }}
-            docker-bake-${{ matrix.target }}.hcl
 
       - name: Build & Push Image
         id: build-push
