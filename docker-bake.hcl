@@ -78,8 +78,9 @@ target "base" {
     CUDA_VERSION = CUDA_VERSION
     CUDA_RELEASE = cudarelease(CUDA_VERSION)
 
-    TORCH_INDEX   = "https://download.pytorch.org/whl/cu118"
-    TORCH_VERSION = TORCH_VERSION
+    EXTRA_PIP_ARGS = ""
+    TORCH_INDEX    = "https://download.pytorch.org/whl/cu118"
+    TORCH_VERSION  = TORCH_VERSION
   }
 }
 
@@ -119,8 +120,9 @@ target "base-cu118" {
     CUDA_VERSION = "11.8.0"
     CUDA_RELEASE = cudarelease(CUDA_VERSION)
 
-    TORCH_INDEX   = "https://download.pytorch.org/whl/cu118"
-    TORCH_VERSION = TORCH_VERSION
+    TORCH_INDEX    = "https://download.pytorch.org/whl/cu118"
+    TORCH_VERSION  = TORCH_VERSION
+    TRITON_VERSION = "triton"
   }
 }
 
@@ -141,7 +143,7 @@ target "textgen-webui" {
     WEBUI_REPO_REF = "main"
 
     GPTQ4L_REPO_URL = "https://github.com/qwopqwop200/GPTQ-for-LLaMa"
-    GPTQ4L_REPO_REF = "05781593c818d4dc8adc2d32c975e83d17d2b9a8"
+    GPTQ4L_REPO_REF = "1ddae3e4b28096128c41cb8967eb833c2987b35c"
 
     TRANSFORMERS_VERSION = "git+https://github.com/huggingface/transformers.git@main"
     ACCELERATE_VERSION   = "accelerate==0.18.0"
