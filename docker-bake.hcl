@@ -78,7 +78,7 @@ target "base" {
     CUDA_VERSION = CUDA_VERSION
     CUDA_RELEASE = cudarelease(CUDA_VERSION)
 
-    EXTRA_PIP_ARGS = ""
+    EXTRA_PIP_ARGS = " " # must be a space or it gets unbound lol
     TORCH_INDEX    = "https://download.pytorch.org/whl/cu118"
     TORCH_VERSION  = TORCH_VERSION
   }
