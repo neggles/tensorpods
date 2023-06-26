@@ -8,6 +8,7 @@ ARG BASE_IMAGE=nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_PRIORITY=critical
 ARG PIP_PREFER_BINARY=1
+ARG TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0+PTX"
 
 # Build the base image.
 FROM ${BASE_IMAGE} as base
@@ -22,6 +23,19 @@ ARG PIP_PREFER_BINARY
 
 # make pip STFU about being root
 ENV PIP_ROOT_USER_ACTION=ignore
+ENV _PIP_LOCATIONS_NO_WARN_ON_MISMATCH=1
+
+# torch architecture list for from-source builds
+ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
+
+# set up apt to cache packages
+RUN rm -f /etc/apt/apt.conf.d/docker-clean \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y update \
+    && apt-get -y upgrade
 
 # Removing legacy /usr/local/nvidia paths (see https://gitlab.com/nvidia/container-images/cuda/-/issues/47 )
 ENV PATH=/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -31,8 +45,9 @@ ENV LD_LIBRARY_PATH=/usr/local/cuda/lib:/usr/local/cuda/lib64
 COPY cuda-repo-pin.conf /etc/apt/preferences.d/cuda-container-pin-900
 
 # Install base dependencies
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y update \
   && apt-get -y install --no-install-recommends \
     apt-transport-https \
     apt-utils \
@@ -50,8 +65,9 @@ RUN --mount=type=cache,target=/var/cache/apt \
   && apt-get clean
 
 # Add build tools etc.
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y update \
   && apt-get -y install --no-install-recommends \
     build-essential \
     jq \
@@ -66,8 +82,9 @@ RUN --mount=type=cache,target=/var/cache/apt \
   && apt-get clean
 
 # Install python 3.10
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y update \
   && apt-get -y install --no-install-recommends \
     python-is-python3 \
     'python3-dev=3.10*' \
@@ -79,15 +96,17 @@ RUN --mount=type=cache,target=/var/cache/apt \
   && apt-get clean
 
 # Install CUDNN dev package to match existing binary package
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y update \
   && apt-get -y install --no-install-recommends \
     libcudnn8-dev=$(dpkg-query --showformat='${Version}' --show libcudnn8) \
   && apt-get clean
 
 # Install TensorRT libraries
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y update \
   && apt-get -y install --no-install-recommends \
     libnvinfer-dev \
     python3-libnvinfer-dev \
@@ -97,7 +116,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
 ARG TORCH_INDEX
 ARG TORCH_VERSION
 ARG EXTRA_PIP_ARGS
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python3 -m pip install ${EXTRA_PIP_ARGS} \
       --extra-index-url ${TORCH_INDEX} \
       "${TORCH_VERSION:-torch}" \
@@ -108,7 +127,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 ARG XFORMERS_VERSION
 ARG BNB_VERSION
 ARG TRITON_VERSION
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python3 -m pip install --no-deps \
       "${TRITON_VERSION}" \
       "${BNB_VERSION}" \
