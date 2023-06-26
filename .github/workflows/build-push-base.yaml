@@ -57,10 +57,12 @@ jobs:
       matrix:
         include:
           - name: "Base CUDA 12.1"
-            target: "base"
+            target: "base-cu121"
+            flavour: |
+              suffix=-cu121
             tags: |
               type=raw,value=latest,enable={{is_default_branch}}
-              type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
+              type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
               type=sha,format=short
               type=ref,event=branch
               type=ref,event=tag
@@ -68,13 +70,15 @@ jobs:
 
           - name: "Base CUDA 11.8"
             target: "base-cu118"
+            flavour: |
+              suffix=-cu118
             tags: |
-              type=raw,value=latest,enable={{is_default_branch}},suffix=-cu118
-              type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}},suffix=-cu118
-              type=sha,format=short,suffix=-cu118
-              type=ref,event=branch,suffix=-cu118
-              type=ref,event=tag,suffix=-cu118
-              type=ref,event=pr,suffix=-cu118
+              type=raw,value=latest,enable={{is_default_branch}}
+              type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
+              type=sha,format=short
+              type=ref,event=branch
+              type=ref,event=tag
+              type=ref,event=pr
 
     steps:
       - name: Free disk space
@@ -108,6 +112,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
+          flavour: ${{ matrix.flavour }}
           images: |
             ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: ${{ matrix.tags }}
@@ -123,4 +128,4 @@ jobs:
           push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.force-push }}
           set: |
             *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
+            *.cache-to=type=gha,mode=min

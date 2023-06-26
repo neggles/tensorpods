@@ -1,6 +1,18 @@
 # docker-bake.hcl for tensorpod builds
 group "default" {
-  targets = ["base"]
+  targets = ["cuda11"]
+}
+
+group "cuda11" {
+  targets = ["base-cu118"]
+}
+
+group "cuda12" {
+  targets = ["base-cu121"]
+}
+
+group "edge" {
+  targets = ["base-edge"]
 }
 
 variable "IMAGE_REGISTRY" {
@@ -9,14 +21,6 @@ variable "IMAGE_REGISTRY" {
 
 variable "IMAGE_NAMESPACE" {
   default = "neggles/tensorpods"
-}
-
-variable "CUDA_BASE_IMAGE" {
-  default = "nvidia/cuda"
-}
-
-variable "CUDA_VERSION" {
-  default = "12.1.1"
 }
 
 function "cudatag" {
@@ -29,12 +33,9 @@ function "cudarelease" {
   result = regex_replace(version, "^(\\d+)\\.(\\d).*", "$1-$2")
 }
 
-variable "TORCH_VERSION" {
-  default = "torch==2.0.1+cu118"
-}
-
-variable "TORCH_INDEX" {
-  default = "https://download.pytorch.org/whl/cu118"
+function "imagetag" {
+  params = [imagename, tag]
+  result = "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${imagename}:${tag}"
 }
 
 # docker-metadata-action will populate this in GitHub Actions
@@ -44,18 +45,12 @@ target "docker-metadata-action" {}
 target "common" {
   context = "."
   contexts = {
-    cuda-11-8 = "docker-image://${CUDA_BASE_IMAGE}:${cudatag("11.8.0", "devel", "cudnn8")}"
-    cuda-12-1 = "docker-image://${CUDA_BASE_IMAGE}:${cudatag("12.1.1", "devel", "cudnn8")}"
+    cuda-11-8 = "docker-image://nvidia/cuda:${cudatag("11.8.0", "devel", "cudnn8")}"
+    cuda-12-1 = "docker-image://nvidia/cuda:${cudatag("12.1.1", "devel", "cudnn8")}"
   }
   args = {
-    CUDA_REPO_URL = "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/"
-    CUDA_REPO_KEY = "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub"
-
-    TORCH_INDEX      = TORCH_INDEX
-    TORCH_VERSION    = TORCH_VERSION
     XFORMERS_VERSION = "xformers>=0.0.20"
     BNB_VERSION      = "bitsandbytes>=0.39.0"
-    TRITON_VERSION   = "triton>=2.0.0"
   }
   platforms = ["linux/amd64"]
   output = [
@@ -63,131 +58,56 @@ target "common" {
   ]
 }
 
-# python3.10 cuda 12.1 torch 2.0.1+cu118
-target "base" {
+
+target "matrix" {
+  name       = "base-${item.variant}"
   inherits   = ["common", "docker-metadata-action"]
   context    = "./docker/base"
   dockerfile = "Dockerfile"
   target     = "base"
-  tags = [
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/base:latest",
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/base:latest-cu121"
-  ]
-  args = {
-    BASE_IMAGE   = "cuda-12-1"
-    CUDA_VERSION = CUDA_VERSION
-    CUDA_RELEASE = cudarelease(CUDA_VERSION)
+  matrix = {
+    item = [
+      {
+        # python3.10 cuda 11.8 torch 2.0.1+cu118
+        variant     = "cu118"
+        baseContext = "cuda-11-8"
 
-    EXTRA_PIP_ARGS       = " " # must be a space or it gets unbound lol
-    TORCH_INDEX          = "https://download.pytorch.org/whl/cu118"
-    TORCH_VERSION        = TORCH_VERSION
-    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6;8.9+PTX"
-  }
-}
+        pipArgs       = " "
+        torchIndex    = "https://download.pytorch.org/whl/cu118"
+        torchVersion  = "torch==2.0.1+cu118"
+        tritonVersion = "triton"
+      },
+      {
+        # python3.10 cuda 12.1 torch 2.0.1+cu118
+        variant     = "cu121"
+        baseContext = "cuda-12-1"
 
-# python3.10 cuda12.1 torch nightly (2.1.0)
-target "base-edge" {
-  inherits   = ["common", "docker-metadata-action"]
-  context    = "./docker/base"
-  dockerfile = "Dockerfile"
-  target     = "base"
-  tags = [
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/base:edge",
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/base:edge-cu121"
-  ]
-  args = {
-    BASE_IMAGE   = "cuda-12-1"
-    CUDA_VERSION = "12.1.1"
-    CUDA_RELEASE = cudarelease(CUDA_VERSION)
+        pipArgs       = " "
+        torchIndex    = "https://download.pytorch.org/whl/cu118"
+        torchVersion  = "torch==2.0.1+cu118"
+        tritonVersion = "triton"
+      },
+      {
+        # python3.10 cuda 12.1 torch 2.1 nightly
+        variant     = "edge"
+        baseContext = "cuda-12-1"
 
-    EXTRA_PIP_ARGS       = "--pre"
-    TORCH_INDEX          = "https://download.pytorch.org/whl/nightly/cu121"
-    TORCH_VERSION        = "torch"
-    TRITON_VERSION       = "git+https://github.com/openai/triton.git#subdirectory=python"
-    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6;8.9+PTX"
-  }
-}
-
-# py3.10 cuda 11.8 torch 2.0.1+cu118
-target "base-cu118" {
-  inherits   = ["common", "docker-metadata-action"]
-  context    = "./docker/base"
-  dockerfile = "Dockerfile"
-  target     = "base"
-  tags = [
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/base:latest-cu118"
-  ]
-  args = {
-    BASE_IMAGE   = "cuda-11-8"
-    CUDA_VERSION = "11.8.0"
-    CUDA_RELEASE = cudarelease(CUDA_VERSION)
-
-    EXTRA_PIP_ARGS       = " " # must be a space or it gets unbound lol
-    TORCH_INDEX          = "https://download.pytorch.org/whl/cu118"
-    TORCH_VERSION        = TORCH_VERSION
-    TRITON_VERSION       = "triton"
-    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6+PTX"
-  }
-}
-
-# text-generation-webui images
-target "textgen-webui" {
-  inherits   = ["common", "docker-metadata-action"]
-  context    = "./docker/textgen-webui"
-  dockerfile = "Dockerfile"
-  target     = "webui"
-  contexts = {
-    base = "target:base-cu118"
+        pipArgs       = "--pre"
+        torchIndex    = "https://download.pytorch.org/whl/nightly/cu121"
+        torchVersion  = "torch"
+        tritonVersion = "git+https://github.com/openai/triton.git#subdirectory=python"
+      }
+    ]
   }
   tags = [
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/textgen-webui:latest"
+    "${imagetag("base", item.variant)}"
   ]
   args = {
-    WEBUI_REPO_URL = "https://github.com/oobabooga/text-generation-webui.git"
-    WEBUI_REPO_REF = "main"
+    BASE_IMAGE = item.baseContext
 
-    GPTQ4L_REPO_URL = "https://github.com/qwopqwop200/GPTQ-for-LLaMa"
-    GPTQ4L_REPO_REF = "0a1189d7f7e4d72d6cd09283f3a67c130cb13e09"
-
-    EXLLAMA_REPO_URL = "https://github.com/turboderp/exllama"
-    EXLLAMA_REPO_REF = "master"
-
-    TRANSFORMERS_VERSION = "git+https://github.com/huggingface/transformers.git@main"
-    ACCELERATE_VERSION   = "accelerate>=0.20.3"
-    DATASETS_VERSION     = "datasets>=2.12.0"
-    SAFETENSORS_VERSION  = "safetensors>=0.3.1"
-
-    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6;8.9+PTX"
+    EXTRA_PIP_ARGS = item.pipArgs
+    TORCH_INDEX    = item.torchIndex
+    TORCH_VERSION  = item.torchVersion
+    TRITON_VERSION = item.tritonVersion
   }
 }
-
-target "textgen-webui-edge" {
-  inherits   = ["common", "docker-metadata-action"]
-  context    = "./docker/textgen-webui"
-  dockerfile = "Dockerfile"
-  target     = "webui"
-  contexts = {
-    base = "target:base-edge"
-  }
-  tags = [
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/textgen-webui:edge"
-  ]
-  args = {
-    WEBUI_REPO_URL = "https://github.com/oobabooga/text-generation-webui.git"
-    WEBUI_REPO_REF = "0db4e191bd9e4e1024c3cb0872096890ed16df25"
-
-    GPTQ4L_REPO_URL = "https://github.com/qwopqwop200/GPTQ-for-LLaMa"
-    GPTQ4L_REPO_REF = "triton"
-
-    EXLLAMA_REPO_URL = "https://github.com/turboderp/exllama"
-    EXLLAMA_REPO_REF = "master"
-
-    TRANSFORMERS_VERSION = "git+https://github.com/huggingface/transformers.git@main"
-    ACCELERATE_VERSION   = "accelerate==0.18.0"
-    DATASETS_VERSION     = "datasets==2.12.0"
-    SAFETENSORS_VERSION  = "safetensors==0.3.1"
-
-    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6;8.9+PTX"
-  }
-}
-
