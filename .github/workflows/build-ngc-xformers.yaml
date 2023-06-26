@@ -60,7 +60,6 @@ jobs:
               suffix=-ngc23.05
             tags: |
               type=raw,value=latest,enable={{is_default_branch}}
-              type=raw,value=${{ env.XFORMERS_REF }},enable={{is_default_branch}}
               type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
               type=sha,format=short
               type=ref,event=branch
@@ -102,7 +101,9 @@ jobs:
           flavour: ${{ matrix.flavour }}
           images: |
             ${{ env.IMAGE_REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
-          tags: ${{ matrix.tags }}
+          tags: |
+            ${{ matrix.tags }}
+            type=raw,value=${{ env.XFORMERS_REF }},enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.title=xformers-ngc
             org.opencontainers.image.description=xformers wheel for NGC pytorch containers
