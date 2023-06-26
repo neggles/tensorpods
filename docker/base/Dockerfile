@@ -20,6 +20,9 @@ ARG DEBIAN_FRONTEND
 ARG DEBIAN_PRIORITY
 ARG PIP_PREFER_BINARY
 
+# make pip STFU about being root
+ENV PIP_ROOT_USER_ACTION=ignore
+
 # Removing legacy /usr/local/nvidia paths (see https://gitlab.com/nvidia/container-images/cuda/-/issues/47 )
 ENV PATH=/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib:/usr/local/cuda/lib64
