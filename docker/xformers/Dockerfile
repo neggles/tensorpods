@@ -2,17 +2,15 @@
 # Path: base/Dockerfile
 
 # Default upstream image for when not using buildx
-ARG BASE_IMAGE="nvcr.io/nvidia/pytorch"
-ARG BASE_TAG="23.05-py3"
+ARG BASE_IMAGE="nvcr.io/nvidia/pytorch:23.05-py3"
 
 # settings for apt and pip (inheritable by all images)
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_PRIORITY=critical
 ARG PIP_PREFER_BINARY=1
-ARG TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0+PTX"
 
 # Build xformers
-FROM ${BASE_IMAGE}:${BASE_TAG} as builder
+FROM ${BASE_IMAGE} as builder
 
 # Set shell
 SHELL ["/bin/bash", "-ceuxo", "pipefail"]
@@ -46,7 +44,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # clone repo and change dir
 ARG XFORMERS_REPO=https://github.com/facebookresearch/xformers.git
 ARG XFORMERS_REF=main
-RUN git clone --depth=1 --recursive --shallow-submodules -- "${XFORMERS_REPO}" "xformers"
+RUN git clone --recursive --shallow-submodules --single-branch \
+    --branch "${XFORMERS_REF}" "${XFORMERS_REPO}" "xformers"
 WORKDIR /workspace/xformers
 
 # build xformers and output to /xformers for later extraction
