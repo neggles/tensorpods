@@ -58,7 +58,7 @@ jobs:
         include:
           - name: "Base CUDA 12.1"
             target: "base-cu121"
-            flavour: |
+            flavor: |
               suffix=-cu121
             tags: |
               type=raw,value=latest,enable={{is_default_branch}}
@@ -70,7 +70,7 @@ jobs:
 
           - name: "Base CUDA 11.8"
             target: "base-cu118"
-            flavour: |
+            flavor: |
               suffix=-cu118
             tags: |
               type=raw,value=latest,enable={{is_default_branch}}
@@ -112,7 +112,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          flavour: ${{ matrix.flavour }}
+          flavor: ${{ matrix.flavor }}
           images: |
             ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: ${{ matrix.tags }}
