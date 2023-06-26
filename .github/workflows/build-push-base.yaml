@@ -7,7 +7,7 @@ on:
       - "main"
       - "release"
     paths:
-      - ".github/workflows/build-push-base.yml"
+      - ".github/workflows/build-push-base.yaml"
       - "docker/base/*"
       - "docker-bake.hcl"
       - "docker-compose.base.yml"
@@ -23,7 +23,7 @@ on:
 
   pull_request:
     paths:
-      - ".github/workflows/build-push-base.yml"
+      - ".github/workflows/build-push-base.yaml"
       - "docker/base/*"
       - "docker-bake.hcl"
       - "docker-compose.base.yml"

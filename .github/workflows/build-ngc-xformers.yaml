@@ -7,7 +7,7 @@ on:
       - "main"
       - "release"
     paths:
-      - ".github/workflows/build-ngc-xformers.yml"
+      - ".github/workflows/build-ngc-xformers.yaml"
       - "docker/xformers/*"
       - "docker-bake.hcl"
       - "!**.md"
@@ -22,7 +22,7 @@ on:
 
   pull_request:
     paths:
-      - ".github/workflows/build-ngc-xformers.yml"
+      - ".github/workflows/build-ngc-xformers.yaml"
       - "docker/xformers/*"
       - "docker-bake.hcl"
       - "!**.md"
