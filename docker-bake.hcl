@@ -53,9 +53,9 @@ target "common" {
 
     TORCH_INDEX      = TORCH_INDEX
     TORCH_VERSION    = TORCH_VERSION
-    XFORMERS_VERSION = "xformers==0.0.18"
-    BNB_VERSION      = "bitsandbytes==0.38.1"
-    TRITON_VERSION   = "triton~=2.0.0"
+    XFORMERS_VERSION = "xformers>=0.0.20"
+    BNB_VERSION      = "bitsandbytes>=0.39.0"
+    TRITON_VERSION   = "triton>=2.0.0"
   }
   platforms = ["linux/amd64"]
   output = [
@@ -78,9 +78,10 @@ target "base" {
     CUDA_VERSION = CUDA_VERSION
     CUDA_RELEASE = cudarelease(CUDA_VERSION)
 
-    EXTRA_PIP_ARGS = " " # must be a space or it gets unbound lol
-    TORCH_INDEX    = "https://download.pytorch.org/whl/cu118"
-    TORCH_VERSION  = TORCH_VERSION
+    EXTRA_PIP_ARGS       = " " # must be a space or it gets unbound lol
+    TORCH_INDEX          = "https://download.pytorch.org/whl/cu118"
+    TORCH_VERSION        = TORCH_VERSION
+    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6;8.9+PTX"
   }
 }
 
@@ -99,10 +100,11 @@ target "base-edge" {
     CUDA_VERSION = "12.1.1"
     CUDA_RELEASE = cudarelease(CUDA_VERSION)
 
-    EXTRA_PIP_ARGS = "--pre"
-    TORCH_INDEX    = "https://download.pytorch.org/whl/nightly/cu121"
-    TORCH_VERSION  = "torch"
-    TRITON_VERSION = "git+https://github.com/openai/triton.git#subdirectory=python"
+    EXTRA_PIP_ARGS       = "--pre"
+    TORCH_INDEX          = "https://download.pytorch.org/whl/nightly/cu121"
+    TORCH_VERSION        = "torch"
+    TRITON_VERSION       = "git+https://github.com/openai/triton.git#subdirectory=python"
+    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6;8.9+PTX"
   }
 }
 
@@ -120,9 +122,11 @@ target "base-cu118" {
     CUDA_VERSION = "11.8.0"
     CUDA_RELEASE = cudarelease(CUDA_VERSION)
 
-    TORCH_INDEX    = "https://download.pytorch.org/whl/cu118"
-    TORCH_VERSION  = TORCH_VERSION
-    TRITON_VERSION = "triton"
+    EXTRA_PIP_ARGS       = " " # must be a space or it gets unbound lol
+    TORCH_INDEX          = "https://download.pytorch.org/whl/cu118"
+    TORCH_VERSION        = TORCH_VERSION
+    TRITON_VERSION       = "triton"
+    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6+PTX"
   }
 }
 
@@ -143,14 +147,17 @@ target "textgen-webui" {
     WEBUI_REPO_REF = "main"
 
     GPTQ4L_REPO_URL = "https://github.com/qwopqwop200/GPTQ-for-LLaMa"
-    GPTQ4L_REPO_REF = "1ddae3e4b28096128c41cb8967eb833c2987b35c"
+    GPTQ4L_REPO_REF = "0a1189d7f7e4d72d6cd09283f3a67c130cb13e09"
+
+    EXLLAMA_REPO_URL = "https://github.com/turboderp/exllama"
+    EXLLAMA_REPO_REF = "master"
 
     TRANSFORMERS_VERSION = "git+https://github.com/huggingface/transformers.git@main"
-    ACCELERATE_VERSION   = "accelerate==0.18.0"
-    DATASETS_VERSION     = "datasets==2.12.0"
-    SAFETENSORS_VERSION  = "safetensors==0.3.1"
+    ACCELERATE_VERSION   = "accelerate>=0.20.3"
+    DATASETS_VERSION     = "datasets>=2.12.0"
+    SAFETENSORS_VERSION  = "safetensors>=0.3.1"
 
-    TORCH_CUDA_ARCH_LIST = "7.0 7.5 8.0 8.6+PTX"
+    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6;8.9+PTX"
   }
 }
 
@@ -172,27 +179,15 @@ target "textgen-webui-edge" {
     GPTQ4L_REPO_URL = "https://github.com/qwopqwop200/GPTQ-for-LLaMa"
     GPTQ4L_REPO_REF = "triton"
 
+    EXLLAMA_REPO_URL = "https://github.com/turboderp/exllama"
+    EXLLAMA_REPO_REF = "master"
+
     TRANSFORMERS_VERSION = "git+https://github.com/huggingface/transformers.git@main"
     ACCELERATE_VERSION   = "accelerate==0.18.0"
     DATASETS_VERSION     = "datasets==2.12.0"
     SAFETENSORS_VERSION  = "safetensors==0.3.1"
 
-    TORCH_CUDA_ARCH_LIST = "7.0 7.5 8.0 8.6+PTX"
+    TORCH_CUDA_ARCH_LIST = "7.0;7.5;8.0;8.6;8.9+PTX"
   }
 }
 
-# saltshaker images
-target "saltshaker" {
-  inherits   = ["common", "docker-metadata-action"]
-  context    = "./docker/saltshaker"
-  dockerfile = "saltshaker/Dockerfile"
-  target     = "trainer"
-  contexts = {
-    base = "target:base"
-  }
-  tags = ["${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/saltshaker:latest"]
-  args = {
-    TRAINER_REPO_URL = "https://github.com/neggles/saltshaker.git"
-    TRAINER_REPO_REF = "5e91e22fa7703ef964b8fca5e023d8c0403e9d7c"
-  }
-}

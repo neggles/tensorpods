@@ -50,6 +50,17 @@ RUN mkdir -p repositories \
     && git reset --hard "${GPTQ4L_REPO_REF}" \
     && git submodule update --init --recursive
 
+# make ExLLaMA available
+ARG EXLLAMA_REPO_URL=https://github.com/turboderp/exllama
+ARG EXLLAMA_REPO_REF=master
+RUN mkdir -p repositories \
+    && cd repositories \
+    && git clone --depth=1 "${EXLLAMA_REPO_URL}" "exllama" \
+    && cd "exllama" \
+    && git fetch --depth=1 origin "${EXLLAMA_REPO_REF}" \
+    && git reset --hard "${EXLLAMA_REPO_REF}" \
+    && git submodule update --init --recursive
+
 # Install GPTQ4L dependencies (manually)
 ARG TRANSFORMERS_VERSION=transformers==4.28.1
 ARG ACCELERATE_VERSION=accelerate==0.18.0
@@ -63,6 +74,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
         "${TRANSFORMERS_VERSION}" \
         sentencepiece \
         texttable \
+        ninja \
         numpy \
         toml
 
