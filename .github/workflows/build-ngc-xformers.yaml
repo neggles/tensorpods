@@ -9,7 +9,7 @@ on:
     paths:
       - ".github/workflows/build-ngc-xformers.yaml"
       - "docker/xformers/*"
-      - "docker-bake.hcl"
+      - "docker-bake.xformers.hcl"
       - "!**.md"
 
   workflow_dispatch:
@@ -24,7 +24,7 @@ on:
     paths:
       - ".github/workflows/build-ngc-xformers.yaml"
       - "docker/xformers/*"
-      - "docker-bake.hcl"
+      - "docker-bake.xformers.hcl"
       - "!**.md"
 
 defaults:
@@ -58,13 +58,6 @@ jobs:
             target: "xformers"
             flavor: |
               suffix=-ngc23.05
-            tags: |
-              type=raw,value=latest,enable={{is_default_branch}}
-              type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
-              type=sha,format=short
-              type=ref,event=branch
-              type=ref,event=tag
-              type=ref,event=pr
 
     steps:
       - name: Free disk space
@@ -102,8 +95,13 @@ jobs:
           images: |
             ${{ env.IMAGE_REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
           tags: |
-            ${{ matrix.tags }}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ env.XFORMERS_REF }},enable={{is_default_branch}}
+            type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
+            type=sha,format=short
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
           labels: |
             org.opencontainers.image.title=xformers-ngc
             org.opencontainers.image.description=xformers wheel for NGC pytorch containers
@@ -115,7 +113,7 @@ jobs:
         with:
           targets: ${{ matrix.target }}
           files: |
-            ./docker/xformers/docker-bake.hcl
+            ./docker-bake.xformers.hcl
             ${{ steps.meta.outputs.bake-file }}
           push: ${{ contains(fromJSON('["push", "schedule"]'), github.event_name) || inputs.force-push }}
           set: |

@@ -36,8 +36,6 @@ function "imagetag" {
 target "docker-metadata-action" {}
 
 target "common" {
-  dockerfile = "Dockerfile"
-  context    = "."
   contexts = {
     ngc = "docker-image://nvcr.io/nvidia/pytorch:${NGC_VERSION}-py3"
   }
@@ -45,10 +43,6 @@ target "common" {
     "${imagetag("xformers", "latest")}",
     "${imagetag("xformers", "${XFORMERS_REF}")}",
   ]
-  args = {
-    XFORMERS_REPO = XFORMERS_REPO
-    XFORMERS_REF  = XFORMERS_REF
-  }
   platforms = ["linux/amd64"]
   output = [
     "type=docker",
@@ -56,6 +50,12 @@ target "common" {
 }
 
 target "xformers" {
-  inherits = ["common", "docker-metadata-action"]
-  target   = "xformers"
+  inherits   = ["common", "docker-metadata-action"]
+  context    = "docker/xformers"
+  dockerfile = "Dockerfile"
+  target     = "xformers"
+  args = {
+    XFORMERS_REPO = XFORMERS_REPO
+    XFORMERS_REF  = XFORMERS_REF
+  }
 }
