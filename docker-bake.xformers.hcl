@@ -27,6 +27,15 @@ variable "XFORMERS_REF" {
   default = "v0.0.20"
 }
 
+variable "TORCH_CUDA_ARCH_LIST" {
+  # sorry pascal users but your cards are no good here
+  default = "7.0;7.5;8.0;8.6;8.9;9.0"
+}
+
+variable "MAX_JOBS" {
+  default = ""
+}
+
 function "imagetag" {
   params = [imagename, tag]
   result = "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:${tag}-ngc${NGC_VERSION}"
@@ -55,7 +64,9 @@ target "xformers" {
   dockerfile = "Dockerfile"
   target     = "xformers"
   args = {
-    XFORMERS_REPO = XFORMERS_REPO
-    XFORMERS_REF  = XFORMERS_REF
+    XFORMERS_REPO        = XFORMERS_REPO
+    XFORMERS_REF         = XFORMERS_REF
+    TORCH_CUDA_ARCH_LIST = TORCH_CUDA_ARCH_LIST
+    MAX_JOBS             = MAX_JOBS
   }
 }

@@ -60,25 +60,11 @@ jobs:
             target: "base-cu121"
             flavor: |
               suffix=-cu121
-            tags: |
-              type=raw,value=latest,enable={{is_default_branch}}
-              type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
-              type=sha,format=short
-              type=ref,event=branch
-              type=ref,event=tag
-              type=ref,event=pr
 
           - name: "Base CUDA 11.8"
             target: "base-cu118"
             flavor: |
               suffix=-cu118
-            tags: |
-              type=raw,value=latest,enable={{is_default_branch}}
-              type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
-              type=sha,format=short
-              type=ref,event=branch
-              type=ref,event=tag
-              type=ref,event=pr
 
     steps:
       - name: Free disk space
@@ -115,7 +101,13 @@ jobs:
           flavor: ${{ matrix.flavor }}
           images: |
             ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}
-          tags: ${{ matrix.tags }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
+            type=sha,format=short
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
 
       - name: Build & Push Image
         id: build-push

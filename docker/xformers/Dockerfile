@@ -19,7 +19,10 @@ SHELL ["/bin/bash", "-ceuxo", "pipefail"]
 ARG DEBIAN_FRONTEND
 ARG DEBIAN_PRIORITY
 ARG PIP_PREFER_BINARY
-ARG TORCH_CUDA_ARCH_LIST
+
+# build options
+ARG TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6;8.9;9.0"
+ARG MAX_JOBS
 
 # make pip STFU about being root
 ENV PIP_ROOT_USER_ACTION=ignore
