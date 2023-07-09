@@ -55,7 +55,7 @@ env:
   # sorry pascal users but your cards are no good here
   TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6;8.9;9.0"
   # for ninja so the runner doesn't explode
-  MAX_JOBS: 2
+  MAX_JOBS: 1
 
 jobs:
   build:
@@ -72,8 +72,14 @@ jobs:
         include:
           - name: "NGC 23.05"
             target: "xformers"
+            ngc-ver: "23.05"
             flavor: |
               suffix=-ngc23.05
+          - name: "NGC 23.06"
+            target: "xformers"
+            ngc-ver: "23.06"
+            flavor: |
+              suffix=-ngc23.06
 
     steps:
       - name: Checkout
@@ -125,6 +131,8 @@ jobs:
       - name: Build & Push Image
         id: build-push
         uses: docker/bake-action@v3
+        env:
+          NGC_VERSION: ${{ matrix.ngc-ver }}
         with:
           targets: ${{ matrix.target }}
           files: |

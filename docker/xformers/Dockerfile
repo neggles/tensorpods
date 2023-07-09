@@ -54,7 +54,7 @@ WORKDIR /workspace/xformers
 # build xformers and output to /xformers for later extraction
 RUN rm -fr /xformers \
     && mkdir -p /xformers \
-    && python -m build --no-isolation --outdir /xformers
+    && nice -n10 python -m build --no-isolation --outdir /xformers
 
 # Build the final image (empty save for xformers wheel)
 FROM scratch AS xformers
