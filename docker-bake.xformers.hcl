@@ -48,8 +48,7 @@ target "docker-metadata-action" {}
 target "common" {
   context = "."
   contexts = {
-    ngc      = "docker-image://nvcr.io/nvidia/pytorch:${NGC_VERSION}-py3"
-    xformers = "docker-image://${imagetag("${IMAGE_NAME}", "${XFORMERS_REF}")}"
+    ngc = "docker-image://nvcr.io/nvidia/pytorch:${NGC_VERSION}-py3"
   }
   args = {
     XFORMERS_IMAGE = "xformers"
