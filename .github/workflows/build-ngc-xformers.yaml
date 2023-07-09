@@ -10,9 +10,18 @@ on:
       - ".github/workflows/build-ngc-xformers.yaml"
       - "docker/xformers/*"
       - "docker-bake.xformers.hcl"
+      - "docker-bake.ngc.hcl"
       - "!**.md"
 
   workflow_dispatch:
+    inputs:
+      force-push:
+        description: "push to GHCR"
+        type: boolean
+        required: true
+        default: false
+
+  workflow_call:
     inputs:
       force-push:
         description: "push to GHCR"
@@ -25,6 +34,7 @@ on:
       - ".github/workflows/build-ngc-xformers.yaml"
       - "docker/xformers/*"
       - "docker-bake.xformers.hcl"
+      - "docker-bake.ngc.hcl"
       - "!**.md"
 
 defaults:
@@ -40,6 +50,8 @@ env:
   IMAGE_REGISTRY: ghcr.io
   IMAGE_NAME: xformers
   IMAGE_PLATFORMS: "linux/amd64"
+  TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6;8.9;9.0"
+  MAX_JOBS: 2 # for ninja so the runner doesn't explode
 
 jobs:
   build:
@@ -93,13 +105,12 @@ jobs:
         with:
           flavor: ${{ matrix.flavor }}
           images: |
-            ${{ env.IMAGE_REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+            ${{ env.IMAGE_REGISTRY }}/${{ github.repository }}/${{ matrix.target }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ env.XFORMERS_REF }},enable={{is_default_branch}}
             type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
             type=sha,format=short
-            type=ref,event=branch
             type=ref,event=tag
             type=ref,event=pr
           labels: |

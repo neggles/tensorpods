@@ -1,6 +1,6 @@
 # docker-bake.hcl for tensorpod builds
 group "default" {
-  targets = ["xformers"]
+  targets = ["base"]
 }
 
 variable "IMAGE_REGISTRY" {
@@ -38,24 +38,24 @@ variable "MAX_JOBS" {
 
 function "imagetag" {
   params = [imagename, tag]
-  result = "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:${tag}-ngc${NGC_VERSION}"
+  result = "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${imagename}:${tag}-ngc${NGC_VERSION}"
 }
 
 # docker-metadata-action will populate this in GitHub Actions
 target "docker-metadata-action" {}
 
+# Shared amongst all containers
 target "common" {
+  context = "."
   contexts = {
-    ngc = "docker-image://nvcr.io/nvidia/pytorch:${NGC_VERSION}-py3"
+    ngc      = "docker-image://nvcr.io/nvidia/pytorch:${NGC_VERSION}-py3"
+    xformers = "docker-image://${imagetag("${IMAGE_NAME}", "${XFORMERS_REF}")}"
   }
-  tags = [
-    "${imagetag("xformers", "latest")}",
-    "${imagetag("xformers", "${XFORMERS_REF}")}",
-  ]
+  args = {
+    XFORMERS_IMAGE = "xformers"
+    BASE_IMAGE     = "ngc"
+  }
   platforms = ["linux/amd64"]
-  output = [
-    "type=docker",
-  ]
 }
 
 target "xformers" {
