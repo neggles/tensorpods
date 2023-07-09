@@ -8,3 +8,17 @@
 /misc/
 /temp/
 /workspace/
+
+# envrc and env
+/.env
+/.env.*
+/.envrc
+/!.example
+
+# VSCode dev container config
+/.devcontainer
+
+# Compose files
+/docker-compose*override.yml
+/docker-compose.override.yml
+!/docker-compose.*.example.yml
