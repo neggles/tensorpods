@@ -76,14 +76,6 @@ jobs:
               suffix=-ngc23.05
 
     steps:
-      - name: Free disk space
-        id: free-disk-space
-        run: |
-          df -h .
-          sudo find /usr/share/dotnet -delete
-          sudo find /usr/local/lib/android -delete
-          df -h .
-
       - name: Checkout
         id: checkout
         uses: actions/checkout@v3
@@ -121,6 +113,14 @@ jobs:
             org.opencontainers.image.title=xformers-ngc
             org.opencontainers.image.description=xformers wheel for NGC pytorch containers
             org.opencontainers.image.vendor=neggles.dev
+
+      - name: Free disk space
+        id: free-disk-space
+        run: |
+          df -h .
+          sudo find /usr/share/dotnet -delete
+          sudo find /usr/local/lib/android -delete
+          df -h .
 
       - name: Build & Push Image
         id: build-push
