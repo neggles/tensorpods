@@ -51,9 +51,8 @@ env:
   IMAGE_NAMESPACE: neggles/tensorpods
   IMAGE_PLATFORMS: "linux/amd64"
 
-  XFORMERS_REF: "v0.0.20"
   # sorry pascal users but your cards are no good here
-  TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6;8.9;9.0"
+  TORCH_CUDA_ARCH_LIST: "7.5;8.0;8.6;8.9;9.0"
   # for ninja so the runner doesn't explode
   MAX_JOBS: 1
 
@@ -70,16 +69,26 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - name: "NGC 23.05"
-            target: "xformers"
-            ngc-ver: "23.05"
-            flavor: |
-              suffix=-ngc23.05
           - name: "NGC 23.06"
             target: "xformers"
             ngc-ver: "23.06"
+            xformers-ver: "main"
             flavor: |
               suffix=-ngc23.06
+
+          - name: "NGC 23.06"
+            target: "xformers"
+            ngc-ver: "23.06"
+            xformers-ver: "v0.0.20"
+            flavor: |
+              suffix=-ngc23.06
+
+          - name: "NGC 23.05"
+            target: "xformers"
+            ngc-ver: "23.05"
+            xformers-ver: "v0.0.20"
+            flavor: |
+              suffix=-ngc23.05
 
     steps:
       - name: Checkout
@@ -110,7 +119,7 @@ jobs:
             ${{ env.IMAGE_REGISTRY }}/${{ github.repository }}/${{ matrix.target }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{ env.XFORMERS_REF }},enable={{is_default_branch}}
+            type=raw,value=${{ matrix.xformers-ver }},enable={{is_default_branch}}
             type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
             type=sha,format=short
             type=ref,event=tag
@@ -133,6 +142,7 @@ jobs:
         uses: docker/bake-action@v3
         env:
           NGC_VERSION: ${{ matrix.ngc-ver }}
+          XFORMERS_REF: ${{ matrix.xformers-ver }}
         with:
           targets: ${{ matrix.target }}
           files: |
