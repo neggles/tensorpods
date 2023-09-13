@@ -69,26 +69,26 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - name: "NGC 23.06"
+          - name: "NGC 23.08"
             target: "xformers"
-            ngc-ver: "23.06"
+            ngc-ver: "23.08"
             xformers-ver: "main"
             flavor: |
-              suffix=-ngc23.06
+              suffix=-ngc23.08
 
-          - name: "NGC 23.06"
+          - name: "NGC 23.08"
             target: "xformers"
-            ngc-ver: "23.06"
-            xformers-ver: "v0.0.20"
+            ngc-ver: "23.08"
+            xformers-ver: "v0.0.21"
             flavor: |
-              suffix=-ngc23.06
+              suffix=-ngc23.08
 
-          - name: "NGC 23.05"
+          - name: "NGC 23.07"
             target: "xformers"
-            ngc-ver: "23.05"
-            xformers-ver: "v0.0.20"
+            ngc-ver: "23.07"
+            xformers-ver: "v0.0.21"
             flavor: |
-              suffix=-ngc23.05
+              suffix=-ngc23.07
 
     steps:
       - name: Checkout

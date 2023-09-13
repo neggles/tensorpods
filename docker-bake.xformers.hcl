@@ -16,7 +16,7 @@ variable "IMAGE_NAME" {
 }
 
 variable "NGC_VERSION" {
-  default = "23.05"
+  default = "23.07"
 }
 
 variable "XFORMERS_REPO" {
@@ -24,7 +24,7 @@ variable "XFORMERS_REPO" {
 }
 
 variable "XFORMERS_REF" {
-  default = "v0.0.20"
+  default = "v0.0.21"
 }
 
 variable "TORCH_CUDA_ARCH_LIST" {
