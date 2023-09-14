@@ -2,7 +2,7 @@
 # Path: base/Dockerfile
 
 # Default upstream image for when not using buildx
-ARG BASE_IMAGE="nvcr.io/nvidia/pytorch:23.05-py3"
+ARG BASE_IMAGE="nvcr.io/nvidia/pytorch:23.07-py3"
 
 # settings for apt and pip (inheritable by all images)
 ARG DEBIAN_FRONTEND=noninteractive
@@ -42,7 +42,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     wheel \
     cmake \
     ninja \
-    build
+    build \
+    packaging \
+    twine
 
 # clone repo and change dir
 ARG XFORMERS_REPO=https://github.com/facebookresearch/xformers.git
@@ -51,10 +53,18 @@ RUN git clone --recursive --shallow-submodules --single-branch \
     --branch "${XFORMERS_REF}" "${XFORMERS_REPO}" "xformers"
 WORKDIR /workspace/xformers
 
+# calculate version
+RUN export BUILD_VERSION=$(python3 packaging/compute_wheel_version.py)
+ENV BUILD_VERSION=${BUILD_VERSION}
+
 # build xformers and output to /xformers for later extraction
+ARG MAX_JOBS=64
 RUN rm -fr /xformers \
     && mkdir -p /xformers \
-    && nice -n10 python -m build --no-isolation --outdir /xformers
+    && export MAX_JOBS=${MAX_JOBS} \
+    && nice -n20 python3 setup.py bdist_wheel \
+        -d /xformers \
+        -k
 
 # Build the final image (empty save for xformers wheel)
 FROM scratch AS xformers
