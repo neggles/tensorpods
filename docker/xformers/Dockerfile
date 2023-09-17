@@ -22,7 +22,7 @@ ARG PIP_PREFER_BINARY
 
 # build options
 ARG TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6;8.9;9.0"
-ARG MAX_JOBS
+ARG MAX_JOBS=32
 
 # make pip STFU about being root
 ENV PIP_ROOT_USER_ACTION=ignore
@@ -58,10 +58,9 @@ RUN export BUILD_VERSION=$(python3 packaging/compute_wheel_version.py)
 ENV BUILD_VERSION=${BUILD_VERSION}
 
 # build xformers and output to /xformers for later extraction
-ARG MAX_JOBS=64
+ENV MAX_JOBS=${MAX_JOBS}
 RUN rm -fr /xformers \
     && mkdir -p /xformers \
-    && export MAX_JOBS=${MAX_JOBS} \
     && nice -n20 python3 setup.py bdist_wheel \
         -d /xformers \
         -k

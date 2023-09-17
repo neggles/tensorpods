@@ -33,7 +33,7 @@ variable "TORCH_CUDA_ARCH_LIST" {
 }
 
 variable "MAX_JOBS" {
-  default = ""
+  default = "32"
 }
 
 function "imagetag" {
