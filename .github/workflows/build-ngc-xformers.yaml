@@ -71,15 +71,15 @@ jobs:
         include:
           - target: "xformers"
             ngc-ver: "23.08"
-            xformers-ver: "main"
-
-          - target: "xformers"
-            ngc-ver: "23.08"
             xformers-ver: "v0.0.21"
 
           - target: "xformers"
             ngc-ver: "23.07"
             xformers-ver: "v0.0.21"
+
+          - target: "xformers"
+            ngc-ver: "23.08"
+            xformers-ver: "main"
 
     steps:
       - name: Checkout
