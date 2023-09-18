@@ -39,7 +39,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade \
     pip \
     setuptools \
-    wheel \
+    wheel
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade \
     cmake \
     ninja \
     build \

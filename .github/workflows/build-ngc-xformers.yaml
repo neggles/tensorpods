@@ -70,12 +70,12 @@ jobs:
       matrix:
         include:
           - target: "xformers"
-            ngc-ver: "23.08"
+            ngc-ver: "23.06"
             xformers-ver: "v0.0.21"
 
           - target: "xformers"
             ngc-ver: "23.07"
-            xformers-ver: "v0.0.21"
+            xformers-ver: "main"
 
           - target: "xformers"
             ngc-ver: "23.08"
