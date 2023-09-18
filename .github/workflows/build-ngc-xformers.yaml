@@ -52,7 +52,7 @@ env:
   IMAGE_PLATFORMS: "linux/amd64"
 
   # sorry pascal users but your cards are no good here
-  TORCH_CUDA_ARCH_LIST: "7.5;8.0;8.6;8.9;9.0"
+  TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6;8.9;9.0"
   # for ninja so the runner doesn't explode
   MAX_JOBS: 1
 
@@ -70,15 +70,15 @@ jobs:
       matrix:
         include:
           - target: "xformers"
-            ngc-ver: "23.06"
+            ngc-ver: "23.08"
             xformers-ver: "v0.0.21"
 
           - target: "xformers"
-            ngc-ver: "23.07"
+            ngc-ver: "23.08"
             xformers-ver: "main"
 
           - target: "xformers"
-            ngc-ver: "23.08"
+            ngc-ver: "23.07"
             xformers-ver: "main"
 
     steps:

@@ -16,7 +16,7 @@ variable "IMAGE_NAME" {
 }
 
 variable "NGC_VERSION" {
-  default = "23.07"
+  default = "23.08"
 }
 
 variable "XFORMERS_REPO" {
@@ -33,7 +33,7 @@ variable "TORCH_CUDA_ARCH_LIST" {
 }
 
 variable "MAX_JOBS" {
-  default = "32"
+  default = "1"
 }
 
 function "imagetag" {
