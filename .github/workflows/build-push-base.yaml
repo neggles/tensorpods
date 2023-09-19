@@ -39,13 +39,11 @@ concurrency:
 
 env:
   IMAGE_REGISTRY: ghcr.io
-  IMAGE_NAMESPACE: ${{ github.repository }}
-  IMAGE_NAME: base
   IMAGE_PLATFORMS: "linux/amd64"
 
 jobs:
   build:
-    name: Build (CUDA)
+    name: Build
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -56,25 +54,27 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - name: "Base CUDA 12.1"
-            target: "base-cu121"
-            flavor: |
-              suffix=-cu121
+          - target: base
+            cuda-ver: "cu121"
+            torch-ver: "torch201"
 
-          - name: "Base CUDA 11.8"
-            target: "base-cu118"
-            flavor: |
-              suffix=-cu118
+          - target: base
+            cuda-ver: "cu121"
+            torch-ver: "torch210"
+
+          - target: base
+            cuda-ver: "cu118"
+            torch-ver: "torch201"
+
+          - target: base
+            cuda-ver: "cu118"
+            torch-ver: "torch210"
+
+          - target: base
+            cuda-ver: "cu121"
+            torch-ver: "nightly"
 
     steps:
-      - name: Free disk space
-        id: free-disk-space
-        run: |
-          df -h .
-          sudo find /usr/share/dotnet -delete
-          sudo find /usr/local/lib/android -delete
-          df -h .
-
       - name: Checkout
         id: checkout
         uses: actions/checkout@v3
@@ -87,7 +87,7 @@ jobs:
         with:
           platforms: ${{ env.IMAGE_PLATFORMS }}
 
-      - name: Login to GHCR
+      - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
           registry: ${{ env.IMAGE_REGISTRY }}
@@ -98,22 +98,26 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          flavor: ${{ matrix.flavor }}
+          flavor: |
+            suffix=-${{ matrix.cuda-ver }}-${{ matrix.torch-ver }}
           images: |
-            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}
+            ${{ env.IMAGE_REGISTRY }}/${{ github.repository }}/${{ matrix.target }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
             type=sha,format=short
-            type=ref,event=branch
             type=ref,event=tag
             type=ref,event=pr
+          labels: |
+            org.opencontainers.image.title=tensorpods-base
+            org.opencontainers.image.description=base PyTorch nVidia CUDA image
+            org.opencontainers.image.vendor=neggles.dev
 
       - name: Build & Push Image
         id: build-push
         uses: docker/bake-action@v3
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.target }}-${{ matrix.cuda-ver }}-${{ matrix.torch-ver }}
           files: |
             ./docker-bake.hcl
             ${{ steps.meta.outputs.bake-file }}
