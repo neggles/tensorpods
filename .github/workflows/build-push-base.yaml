@@ -113,6 +113,15 @@ jobs:
             org.opencontainers.image.description=base PyTorch nVidia CUDA image
             org.opencontainers.image.vendor=neggles.dev
 
+      - name: Free disk space
+        id: free-disk-space
+        run: |
+          df -h .
+          sudo find "$AGENT_TOOLSDIRECTORY" -delete
+          sudo find /usr/share/dotnet -delete
+          sudo find /usr/local/lib/android -delete
+          df -h .
+
       - name: Build & Push Image
         id: build-push
         uses: docker/bake-action@v3
