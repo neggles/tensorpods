@@ -105,7 +105,7 @@ ARG INCLUDE_TRT=1
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update \
-  && if [ "${INCLUDE_TRT:-}" == "1" ]; then  \
+  && if [ "${INCLUDE_TRT}" == "1" ]; then  \
     apt-get -y install --no-install-recommends \
         libnvinfer-dev \
         python3-libnvinfer-dev \
@@ -141,7 +141,7 @@ ARG EXTRA_PIP_ARGS
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python -m pip install ${EXTRA_PIP_ARGS:-} \
       --extra-index-url ${TORCH_INDEX} \
-      "${TORCH_VERSION:-torch}" \
+      "${TORCH_VERSION}" \
       torchaudio \
       torchvision
 
