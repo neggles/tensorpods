@@ -22,8 +22,9 @@ ARG PIP_PREFER_BINARY
 
 # build options
 ARG TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6;8.9;9.0"
-ARG MAX_JOBS=8
-ARG XFORMERS_BUILD_TYPE=relwithdebinfo
+ARG MAX_JOBS=1
+ARG XFORMERS_BUILD_TYPE=Release
+ARG NVCC_THREADS=1
 
 # make pip STFU about being root
 ENV PIP_ROOT_USER_ACTION=ignore
@@ -63,9 +64,12 @@ ENV BUILD_VERSION=${BUILD_VERSION}
 
 # build xformers and output to /xformers for later extraction
 ENV MAX_JOBS=${MAX_JOBS}
+ENV NVCC_THREADS=${NVCC_THREADS}
+ENV XFORMERS_BUILD_TYPE=${XFORMERS_BUILD_TYPE}
 RUN rm -fr /xformers \
     && mkdir -p /xformers \
-    && nice -n20 python -m build -n -w -o /xformers .
+    && nice -n20 python setup.py bdist_wheel -d /xformers
+
 
 # Build the final image (empty save for xformers wheel)
 FROM scratch AS xformers
