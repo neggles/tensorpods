@@ -20,11 +20,11 @@ variable "NGC_VERSION" {
 }
 
 variable "XFORMERS_REPO" {
-  default = "https://github.com/facebookresearch/xformers.git"
+  default = "https://github.com/neggles/xformers.git"
 }
 
 variable "XFORMERS_REF" {
-  default = "v0.0.21"
+  default = "tensorpods"
 }
 
 variable "TORCH_CUDA_ARCH_LIST" {
