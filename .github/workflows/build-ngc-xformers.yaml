@@ -46,13 +46,14 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_REGISTRY: ghcr.io
   IMAGE_NAME: xformers
-  IMAGE_NAMESPACE: neggles/tensorpods
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ${{ github.repository }}
   IMAGE_PLATFORMS: "linux/amd64"
+  BAKEFILE_NAME: docker-bake.xformers.hcl
 
-  # sorry pascal users but your cards are no good here
-  TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6;8.9;9.0"
+  # sorry pascal/volta users but GH only lets me compile for 6 hours
+  TORCH_CUDA_ARCH_LIST: "7.5;8.0;8.6;8.9;9.0"
   # for ninja so the runner doesn't explode
   MAX_JOBS: 1
   # NVCC my behated
@@ -71,17 +72,21 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - target: "xformers"
+          - target: "xformers-v0021-ngc2308"
             ngc-ver: "23.08"
-            xformers-ver: "tensorpods-v0.0.21"
+            xformers-ver: "v0.0.21"
 
-          - target: "xformers"
-            ngc-ver: "23.08"
-            xformers-ver: "tensorpods"
-
-          - target: "xformers"
+          - target: "xformers-v0021-ngc2307"
             ngc-ver: "23.07"
-            xformers-ver: "tensorpods"
+            xformers-ver: "v0.0.21"
+
+          - target: "xformers-dev-ngc2308"
+            ngc-ver: "23.08"
+            xformers-ver: "dev"
+
+          - target: "xformers-dev-ngc2307"
+            ngc-ver: "23.07"
+            xformers-ver: "dev"
 
     steps:
       - name: Checkout
@@ -103,18 +108,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Print bakefile before metadata-action
+        run: docker buildx bake -f ./${{ env.BAKEFILE_NAME }} --print
+
       - name: Generate docker tags
         id: meta
         uses: docker/metadata-action@v4
         with:
           flavor: |
-            suffix=-ngc${{ matrix.ngc-ver }}
+            suffix=-${{ matrix.xformers-ver }}-ngc${{ matrix.ngc-ver }}
           images: |
-            ${{ env.IMAGE_REGISTRY }}/${{ github.repository }}/${{ matrix.target }}
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{ matrix.xformers-ver }},enable={{is_default_branch}}
-            type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
+            type=raw,value=${{ matrix.xformers-ver }},enable={{is_default_branch}},suffix=-ngc${{ matrix.ngc-ver }}
             type=sha,format=short
             type=ref,event=tag
             type=ref,event=pr
@@ -135,13 +141,10 @@ jobs:
       - name: Build & Push Image
         id: build-push
         uses: docker/bake-action@v3
-        env:
-          NGC_VERSION: ${{ matrix.ngc-ver }}
-          XFORMERS_REF: ${{ matrix.xformers-ver }}
         with:
           targets: ${{ matrix.target }}
           files: |
-            ./docker-bake.xformers.hcl
+            ./${{ env.BAKEFILE_NAME }}
             ${{ steps.meta.outputs.bake-file }}
           push: ${{ contains(fromJSON('["push", "schedule"]'), github.event_name) || inputs.force-push }}
           set: |
