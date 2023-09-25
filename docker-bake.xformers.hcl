@@ -127,9 +127,6 @@ target "xformers" {
       }
     ]
   }
-  tags = [
-    notequal("true", CI) ? repoImage("xformers", xformers.version, "${base.type}${base.version}") : ""
-  ]
   args = {
     BASE_IMAGE = "base-${base.type}"
 
