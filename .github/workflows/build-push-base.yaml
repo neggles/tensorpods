@@ -61,7 +61,8 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        target: ["base"]
+        target:
+          - base
         cuda:
           - cu118
           - cu121
@@ -73,6 +74,12 @@ jobs:
             cuda: cu121
             torch: torch201
         include:
+          - target: trt
+            cuda: cu121
+            torch: torch201
+          - target: trt
+            cuda: cu121
+            torch: torch210
           - target: base
             cuda: cu121
             torch: nightly

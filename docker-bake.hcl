@@ -94,7 +94,11 @@ target "common" {
 }
 
 target "base" {
-  name     = stripName("base-${cuda.name}-torch${torch.version}")
+  name = stripName(
+    cuda.with-trt
+    ? "trt-${cuda.name}-torch${torch.version}"
+    : "base-${cuda.name}-torch${torch.version}"
+  )
   inherits = ["common", "docker-metadata-action"]
   context  = "docker/base"
   target   = equal(torch.xformers, "") ? "base" : "xformers-binary"
@@ -124,12 +128,19 @@ target "base" {
     ],
     cuda = [
       {
-        name    = "cu118"
-        version = "11.8.0"
+        name     = "cu118"
+        version  = "11.8.0"
+        with-trt = false
       },
       {
-        name    = "cu121"
-        version = "12.1.1"
+        name     = "cu121"
+        version  = "12.1.1"
+        with-trt = false
+      },
+      {
+        name     = "cu121"
+        version  = "12.1.1"
+        with-trt = true
       }
     ]
   }
@@ -142,6 +153,7 @@ target "base" {
     TORCH_PACKAGE    = "torch==${torch.version}+${cudaName(cuda.version)}"
     TRITON_PACKAGE   = torch.triton
     XFORMERS_PACKAGE = torch.xformers
+    INCLUDE_TRT      = cuda.with-trt
   }
 }
 

@@ -105,7 +105,7 @@ ARG INCLUDE_TRT=1
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update \
-  && if [ "${INCLUDE_TRT}" == "1" ]; then  \
+  && if [ "${INCLUDE_TRT}" == "true" ]; then  \
     apt-get -y install --no-install-recommends \
         libnvinfer-dev \
         python3-libnvinfer-dev \
