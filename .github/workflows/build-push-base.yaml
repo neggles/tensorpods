@@ -62,11 +62,20 @@ jobs:
       max-parallel: 1
       matrix:
         target: ["base"]
-        torch: ["torch201", "torch210"]
-        cuda: ["cu118", "cu121"]
+        cuda:
+          - cu118
+          - cu121
+        torch:
+          - torch201
+          - torch210
+        exclude:
+          - target: base
+            cuda: cu121
+            torch: torch201
         include:
-          - cuda: "cu121"
-            torch: "nightly"
+          - target: base
+            cuda: cu121
+            torch: nightly
 
     steps:
       - name: Checkout
