@@ -150,7 +150,7 @@ target "base" {
     CUDA_RELEASE = cudaRelease(cuda.version)
 
     TORCH_INDEX      = "${torch.index}/${cudaName(cuda.version)}"
-    TORCH_PACKAGE    = "torch==${torch.version}+${cudaName(cuda.version)}"
+    TORCH_PACKAGE    = "torch"
     TRITON_PACKAGE   = torch.triton
     XFORMERS_PACKAGE = torch.xformers
     INCLUDE_TRT      = cuda.with-trt

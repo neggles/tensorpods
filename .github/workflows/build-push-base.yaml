@@ -63,23 +63,14 @@ jobs:
       matrix:
         target:
           - base
+          - trt
         cuda:
           - cu118
           - cu121
         torch:
           - torch201
           - torch210
-        exclude:
-          - target: base
-            cuda: cu121
-            torch: torch201
         include:
-          - target: trt
-            cuda: cu121
-            torch: torch201
-          - target: trt
-            cuda: cu121
-            torch: torch210
           - target: base
             cuda: cu121
             torch: nightly
