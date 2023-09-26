@@ -135,3 +135,10 @@ target "xformers" {
     XFORMERS_BUILD_TYPE = xformers.buildtype
   }
 }
+
+target local {
+  inherits = ["xformers-v0021-ngc2308"]
+  tags = [
+    repoImage("xformers", "v0.0.21", "ngc23.08")
+  ]
+}

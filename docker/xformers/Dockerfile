@@ -70,7 +70,6 @@ RUN rm -fr /xformers \
     && mkdir -p /xformers \
     && nice -n20 python setup.py bdist_wheel -d /xformers
 
-
 # Build the final image (empty save for xformers wheel)
 FROM scratch AS xformers
 COPY --from=builder /xformers /xformers
