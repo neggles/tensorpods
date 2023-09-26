@@ -72,6 +72,12 @@ function repoImage {
   ])
 }
 
+# cursed override for cuda 12.1 on torch 2.0.1...
+function torchIndex {
+  params = [base, version, cuda]
+  result = and(equal(version, "2.0.1"), equal(cuda, "12.1.1")) ? "${base}/cu118" : "${base}/${cudaName(cuda)}"
+}
+
 # set to "true" by github actions, used to disable auto-tag
 variable "CI" { default = "" }
 
@@ -149,7 +155,7 @@ target "base" {
     CUDA_VERSION = cuda.version
     CUDA_RELEASE = cudaRelease(cuda.version)
 
-    TORCH_INDEX      = "${torch.index}/${cudaName(cuda.version)}"
+    TORCH_INDEX      = torchIndex(torch.index, torch.version, cuda.version)
     TORCH_PACKAGE    = "torch"
     TRITON_PACKAGE   = torch.triton
     XFORMERS_PACKAGE = torch.xformers
