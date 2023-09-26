@@ -38,8 +38,16 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  BAKEFILE_NAME: docker-bake.xformers.hcl
   IMAGE_REGISTRY: ghcr.io
   IMAGE_PLATFORMS: "linux/amd64"
+
+  # sorry pascal/volta users but GH only lets me compile for 6 hours
+  TORCH_CUDA_ARCH_LIST: "7.5;8.0;8.6;8.9;9.0"
+  # for ninja so the runner doesn't explode
+  MAX_JOBS: 1
+  # NVCC my behated
+  NVCC_THREADS: 1
 
 jobs:
   build:
@@ -53,26 +61,12 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
+        target: ["base"]
+        torch: ["torch201", "torch210"]
+        cuda: ["cu118", "cu121"]
         include:
-          - target: base
-            cuda-ver: "cu121"
-            torch-ver: "torch201"
-
-          - target: base
-            cuda-ver: "cu121"
-            torch-ver: "torch210"
-
-          - target: base
-            cuda-ver: "cu118"
-            torch-ver: "torch201"
-
-          - target: base
-            cuda-ver: "cu118"
-            torch-ver: "torch210"
-
-          - target: base
-            cuda-ver: "cu121"
-            torch-ver: "nightly"
+          - cuda: "cu121"
+            torch: "nightly"
 
     steps:
       - name: Checkout
@@ -99,11 +93,11 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           flavor: |
-            suffix=-${{ matrix.cuda-ver }}-${{ matrix.torch-ver }}
+            suffix=-${{ matrix.cuda }}-${{ matrix.torch }}
           images: |
             ${{ env.IMAGE_REGISTRY }}/${{ github.repository }}/${{ matrix.target }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ matrix.cuda }}-${{ matrix.torch }},enable={{is_default_branch}},suffix=
             type=schedule,pattern={{date 'YYYYMMDD-hhmm' tz='UTC'}},enable={{is_default_branch}}
             type=sha,format=short
             type=ref,event=branch
@@ -127,7 +121,7 @@ jobs:
         id: build-push
         uses: docker/bake-action@v3
         with:
-          targets: ${{ matrix.target }}-${{ matrix.cuda-ver }}-${{ matrix.torch-ver }}
+          targets: ${{ matrix.target }}-${{ matrix.cuda }}-${{ matrix.torch }}
           files: |
             ./docker-bake.hcl
             ${{ steps.meta.outputs.bake-file }}

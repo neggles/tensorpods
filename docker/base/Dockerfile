@@ -8,7 +8,7 @@ ARG BASE_IMAGE=nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_PRIORITY=critical
 ARG PIP_PREFER_BINARY=1
-ARG TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6;8.9;9.0"
+ARG TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0+PTX"
 
 # Build the base image.
 FROM ${BASE_IMAGE} as base
@@ -136,22 +136,72 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 
 # Install PyTorch
 ARG TORCH_INDEX
-ARG TORCH_VERSION
-ARG EXTRA_PIP_ARGS
+ARG TORCH_PACKAGE="torch"
+ARG TRITON_PACKAGE=" "
+ARG EXTRA_PIP_ARGS=" "
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python -m pip install ${EXTRA_PIP_ARGS:-} \
-      --extra-index-url ${TORCH_INDEX} \
-      "${TORCH_VERSION}" \
+      ${TORCH_PACKAGE} \
+      ${TRITON_PACKAGE} \
       torchaudio \
-      torchvision
+      torchvision \
+      --index-url "${TORCH_INDEX}"
 
-# Install xformers
-ARG XFORMERS_VERSION
+# save and enforce a constraint file to lock the torch version
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python -m pip install ${EXTRA_PIP_ARGS} "${XFORMERS_VERSION}"
+    python -m pip freeze | grep -E '(^torch|triton)' > /torch-constraints.txt
+ENV PIP_CONSTRAINT=/torch-constraints.txt
 
 # we do a little entrypoint setup
+WORKDIR /workspace
 CMD ["/bin/bash", "-l"]
 
-# Specific required versions for everything else will be installed in their respective images
-# since this stuff tends to be pretty picky about versioning.
+
+# can use this target if there's a prebuilt wheel available for this torch version
+FROM base as xformers-binary
+
+# Install xformers
+ARG XFORMERS_PACKAGE="xformers"
+ARG EXTRA_PIP_ARGS=" "
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    python -m pip install ${EXTRA_PIP_ARGS} "${XFORMERS_PACKAGE}"
+
+
+# or if xformers has to be compiled; flash attention 2 makes this impossible
+# on a public github actions runner without limiting yourself to only a handful of architectures
+FROM base AS xformers-build
+
+ARG XFORMERS_BUILD_TYPE=Release
+ARG MAX_JOBS=1
+ARG NVCC_THREADS=1
+
+# clone repo and change dir
+ARG XFORMERS_REPO=https://github.com/facebookresearch/xformers.git
+ARG XFORMERS_REF=main
+RUN git clone --recursive --shallow-submodules --single-branch \
+    --branch "${XFORMERS_REF}" "${XFORMERS_REPO}" "xformers"
+WORKDIR /workspace/xformers
+
+# calculate version
+RUN export BUILD_VERSION=$(python packaging/compute_wheel_version.py)
+ENV BUILD_VERSION=${BUILD_VERSION}
+
+# build xformers and output to /xformers for later extraction
+ENV MAX_JOBS=${MAX_JOBS}
+ENV NVCC_THREADS=${NVCC_THREADS}
+ENV XFORMERS_BUILD_TYPE=${XFORMERS_BUILD_TYPE}
+RUN rm -fr /xformers \
+    && mkdir -p /xformers \
+    && nice -n20 python setup.py bdist_wheel -d /xformers
+
+# test install wheel
+RUN python -m pip install --no-cache /xformers/*.whl
+
+# install the wheel we just built
+FROM base AS xformers-source
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=bind,from=xformers-build,source=/xformers,target=/xformers \
+    python -m pip install /xformers/*.whl
+
+# fin.

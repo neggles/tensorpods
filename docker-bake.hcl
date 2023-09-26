@@ -1,18 +1,6 @@
 # docker-bake.hcl for tensorpod builds
 group "default" {
-  targets = ["base-cu121-torch201", "base-cu121-torch210"]
-}
-
-group "all" {
-  targets = ["base"]
-}
-
-group "cuda11" {
-  targets = ["base-cu118-torch201", "base-cu118-torch210"]
-}
-
-group "cuda12" {
-  targets = ["base-cu121-torch201", "base-cu121-torch210", "base-cu121-nightly"]
+  targets = ["local"]
 }
 
 variable "IMAGE_REGISTRY" {
@@ -23,38 +11,77 @@ variable "IMAGE_NAMESPACE" {
   default = "neggles/tensorpods"
 }
 
-variable "TORCH_CUDA_ARCH_LIST" {
+variable TORCH_CUDA_ARCH_LIST {
+  # sorry pascal users but your cards are no good here
   default = "7.0;7.5;8.0;8.6;8.9;9.0"
 }
 
-variable "XFORMERS_VERSION" {
-  default = "xformers==0.0.21"
+variable MAX_JOBS {
+  default = "8"
 }
 
-function "cudatag" {
-  params = [version, type, cudnn]
-  result = notequal("false", cudnn) ? "${version}-${cudnn}-${type}-ubuntu22.04" : "${version}-${type}-ubuntu22.04"
+variable "NVCC_THREADS" {
+  default = "1"
 }
 
-function "cudarelease" {
+# removes characters not valid in a target name, useful for other things too
+function stripName {
+  params = [name]
+  result = regex_replace(name, "[^a-zA-Z0-9_-]+", "")
+}
+
+# convert a CUDA version number and container dev type etc. into an image URI
+function cudaImage {
+  params          = [cudaVer, cudaType]
+  variadic_params = extraVals
+  result = join(":", [
+    "nvidia/cuda",
+    join("-", [cudaVer], extraVals, [cudaType, "ubuntu22.04"])
+  ])
+}
+
+# convert a CUDA version number into a shortname (e.g. 11.2.1 -> cu112)
+function cudaName {
+  params = [version]
+  result = regex_replace(version, "^(\\d+)\\.(\\d).*", "cu$1$2")
+}
+
+# convert a CUDA version number into a release number (e.g. 11.2.1 -> 11-2)
+function cudaRelease {
   params = [version]
   result = regex_replace(version, "^(\\d+)\\.(\\d).*", "$1-$2")
 }
 
-function "imagetag" {
-  params = [imagename, tag]
-  result = "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${imagename}:${tag}"
+# torch version to torch name
+function torchName {
+  params = [version]
+  result = regex_replace(version, "^(\\d+)\\.(\\d+)\\.(\\d+).*", "torch$1$2$3")
 }
+
+# build a tag for an image from this repo
+function repoImage {
+  params          = [imageName]
+  variadic_params = extraVals
+  result = join(":", [
+    join("/", [IMAGE_REGISTRY, IMAGE_NAMESPACE, imageName]),
+    join("-", extraVals)
+  ])
+}
+
+# set to "true" by github actions, used to disable auto-tag
+variable "CI" { default = "" }
 
 # docker-metadata-action will populate this in GitHub Actions
 target "docker-metadata-action" {}
 
 # Shared amongst all containers
 target "common" {
-  context = "."
+  context    = "."
+  dockerfile = "Dockerfile"
   args = {
     TORCH_CUDA_ARCH_LIST = TORCH_CUDA_ARCH_LIST
-    XFORMERS_VERSION     = XFORMERS_VERSION
+    MAX_JOBS             = MAX_JOBS
+    NVCC_THREADS         = NVCC_THREADS
   }
   platforms = ["linux/amd64"]
   output = [
@@ -63,87 +90,65 @@ target "common" {
 }
 
 target "base" {
-  name     = "base-${item.variant}"
+  name     = stripName("base-${cuda.name}-torch${torch.version}")
   inherits = ["common", "docker-metadata-action"]
-  context  = "./docker/base"
+  context  = "docker/base"
+  target   = equal(torch.xformers, "") ? "base" : "xformers-binary"
   contexts = {
-    cuda-base = "docker-image://nvidia/cuda:${cudatag(item.cudaVersion, "devel", "cudnn8")}"
+    base-cuda = "docker-image://${cudaImage(cuda.version, "devel", "cudnn8")}"
   }
-  dockerfile = "Dockerfile"
-  target     = "base"
   matrix = {
-    item = [
-      ### CUDA 11.8 ###
+    torch = [
       {
-        # python3.10 cuda 11.8 torch 2.0.1+cu118
-        variant     = "cu118-torch201"
-        cudaVersion = "11.8.0"
-
-        pipArgs         = " "
-        torchIndex      = "https://download.pytorch.org/whl/cu118"
-        torchVersion    = "torch"
-        tritonVersion   = "triton"
-        xformersVersion = XFORMERS_VERSION
+        version  = "2.0.1"
+        index    = "https://download.pytorch.org/whl"
+        triton   = ""
+        xformers = "xformers==0.0.21"
       },
       {
-        # python3.10 cuda 11.8 torch 2.1.0+cu118
-        variant     = "cu118-torch210"
-        cudaVersion = "11.8.0"
-
-        pipArgs         = " "
-        torchIndex      = "https://download.pytorch.org/whl/test/cu118"
-        torchVersion    = "torch"
-        tritonVersion   = "triton"
-        xformersVersion = XFORMERS_VERSION
-      },
-      ### CUDA 12.1 ###
-      {
-        # python3.10 cuda 12.1 torch 2.0.1+cu118
-        variant     = "cu121-torch201"
-        cudaVersion = "12.1.1"
-
-        pipArgs         = " "
-        torchIndex      = "https://download.pytorch.org/whl/cu118"
-        torchVersion    = "torch"
-        tritonVersion   = "triton"
-        xformersVersion = XFORMERS_VERSION
+        version  = "2.1.0"
+        index    = "https://download.pytorch.org/whl/test"
+        triton   = ""
+        xformers = ""
       },
       {
-        # python3.10 cuda 12.1 torch 2.1.0+cu121
-        variant     = "cu121-torch210"
-        cudaVersion = "12.1.1"
-
-        pipArgs         = " "
-        torchIndex      = "https://download.pytorch.org/whl/test/cu121"
-        torchVersion    = "torch"
-        tritonVersion   = "triton"
-        xformersVersion = XFORMERS_VERSION
+        version  = "nightly"
+        index    = "https://download.pytorch.org/whl/nightly"
+        triton   = "git+https://github.com/openai/triton.git#subdirectory=python"
+        xformers = ""
+      }
+    ],
+    cuda = [
+      {
+        name    = "cu118"
+        version = "11.8.0"
       },
       {
-        # python3.10 cuda 12.1 torch 2.2 nightly
-        variant     = "cu121-nightly"
-        cudaVersion = "12.1.1"
-
-        pipArgs         = "--pre"
-        torchIndex      = "https://download.pytorch.org/whl/nightly/cu121"
-        torchVersion    = "torch"
-        tritonVersion   = "git+https://github.com/openai/triton.git#subdirectory=python"
-        xformersVersion = "xformers"
+        name    = "cu121"
+        version = "12.1.1"
       }
     ]
   }
+  args = {
+    BASE_IMAGE   = "base-cuda"
+    CUDA_VERSION = cuda.version
+    CUDA_RELEASE = cudaRelease(cuda.version)
+
+    TORCH_INDEX      = "${torch.index}/${cudaName(cuda.version)}"
+    TORCH_PACKAGE    = "torch==${torch.version}+${cudaName(cuda.version)}"
+    TRITON_PACKAGE   = torch.triton
+    XFORMERS_PACKAGE = torch.xformers
+  }
+}
+
+target local {
+  inherits = ["base-cu121-torch210"]
+  target   = "xformers-source"
   tags = [
-    "${imagetag("base", item.variant)}"
+    repoImage("base", cudaName("12.1.1"), torchName("2.1.0"))
   ]
   args = {
-    BASE_IMAGE   = "cuda-base"
-    CUDA_VERSION = item.cudaVersion
-    CUDA_RELEASE = "${cudarelease(item.cudaVersion)}"
-
-    EXTRA_PIP_ARGS   = item.pipArgs
-    TORCH_INDEX      = item.torchIndex
-    TORCH_VERSION    = item.torchVersion
-    TRITON_VERSION   = item.tritonVersion
-    XFORMERS_VERSION = item.xformersVersion
+    XFORMERS_REPO = "https://github.com/neggles/xformers.git"
+    XFORMERS_REF  = "tensorpods-v0.0.21"
   }
 }
