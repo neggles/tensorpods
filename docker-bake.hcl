@@ -4,7 +4,7 @@ group "default" {
 }
 
 group torchrc {
-  targets = ["local-torchrc", "xformers-build"]
+  targets = ["local-torchrc", "xformers-wheel"]
 }
 
 variable "IMAGE_REGISTRY" {
@@ -145,9 +145,9 @@ target "base" {
   }
 }
 
-target xformers-build {
+target xformers-wheel {
   inherits = ["base-cu121-torch210"]
-  target   = "xformers-build"
+  target   = "xformers-wheel"
   tags = [
     repoImage("xformers", "v0.0.21", cudaName("12.1.1"), torchName("2.1.0"))
   ]
@@ -158,8 +158,8 @@ target xformers-build {
 }
 
 target local-torchrc {
-  inherits = ["xformers-build"]
-  targets  = ["xformers-source"]
+  inherits = ["xformers-wheel"]
+  target   = "xformers-source"
   tags = [
     repoImage("base", cudaName("12.1.1"), torchName("2.1.0"))
   ]

@@ -169,7 +169,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 
 # or if xformers has to be compiled; flash attention 2 makes this impossible
 # on a public github actions runner without limiting yourself to only a handful of architectures
-FROM base AS xformers-build
+FROM base AS xformers-builder
 
 ARG XFORMERS_BUILD_TYPE=Release
 ARG MAX_JOBS=1
@@ -197,11 +197,15 @@ RUN rm -fr /xformers \
 # test install wheel
 RUN python -m pip install --no-cache /xformers/*.whl
 
+# wheel-only image
+FROM scratch AS xformers-wheel
+COPY --from=xformers-builder /xformers/*.whl /xformers/
+
 # install the wheel we just built
 FROM base AS xformers-source
 
 RUN --mount=type=cache,target=/root/.cache/pip \
-    --mount=type=bind,from=xformers-build,source=/xformers,target=/xformers \
+    --mount=type=bind,from=xformers-wheel,source=/xformers,target=/xformers \
     python -m pip install /xformers/*.whl
 
 # fin.
