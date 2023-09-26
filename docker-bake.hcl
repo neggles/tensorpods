@@ -1,6 +1,10 @@
 # docker-bake.hcl for tensorpod builds
 group "default" {
-  targets = ["local"]
+  targets = ["local-torchrelease"]
+}
+
+group torchrc {
+  targets = ["local-torchrc", "xformers-build"]
 }
 
 variable "IMAGE_REGISTRY" {
@@ -141,9 +145,29 @@ target "base" {
   }
 }
 
-target local {
+target xformers-build {
   inherits = ["base-cu121-torch210"]
-  target   = "xformers-source"
+  target   = "xformers-build"
+  tags = [
+    repoImage("xformers", "v0.0.21", cudaName("12.1.1"), torchName("2.1.0"))
+  ]
+  args = {
+    XFORMERS_REPO = "https://github.com/neggles/xformers.git"
+    XFORMERS_REF  = "tensorpods-v0.0.21"
+  }
+}
+
+target local-torchrc {
+  inherits = ["xformers-build"]
+  targets  = ["xformers-source"]
+  tags = [
+    repoImage("base", cudaName("12.1.1"), torchName("2.1.0"))
+  ]
+}
+
+target local-torchrelease {
+  inherits = ["base-cu121-torch201"]
+  target   = "xformers-binary"
   tags = [
     repoImage("base", cudaName("12.1.1"), torchName("2.1.0"))
   ]
