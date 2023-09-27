@@ -101,7 +101,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   && apt-get clean
 
 # Install TensorRT libraries
-ARG INCLUDE_TRT=1
+ARG INCLUDE_TRT=true
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update \
