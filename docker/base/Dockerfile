@@ -101,7 +101,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   && apt-get clean
 
 # Install TensorRT libraries
-ARG INCLUDE_TRT=true
+ARG INCLUDE_TRT='false'
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update \
@@ -149,7 +149,11 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 
 # save and enforce a constraint file to lock the torch version
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python -m pip freeze | grep -E '(^torch|triton)' > /torch-constraints.txt
+    python -m pip freeze | grep -E '(^torch|triton)' > /torch-constraints.txt \
+    && echo "-----------------------------" \
+    && echo "Created torch constraint file:" \
+    && cat /torch-constraints.txt \
+    && echo "-----------------------------"
 ENV PIP_CONSTRAINT=/torch-constraints.txt
 
 # we do a little entrypoint setup

@@ -117,13 +117,13 @@ target "base" {
         version  = "2.0.1"
         index    = "https://download.pytorch.org/whl"
         triton   = ""
-        xformers = "xformers==0.0.21"
+        xformers = "xformers>=0.0.21"
       },
       {
         version  = "2.1.0"
-        index    = "https://download.pytorch.org/whl/test"
+        index    = "https://pypi.org/simple"
         triton   = ""
-        xformers = "xformers"
+        xformers = "xformers>=0.0.22"
       },
       {
         version  = "nightly"
