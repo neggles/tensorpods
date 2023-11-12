@@ -108,3 +108,7 @@ $RECYCLE.BIN/
 /docker-compose*override.yml
 /docker-compose.override.yml
 !/docker-compose.*.example.yml
+
+# misc and temp
+/misc/
+/temp/
