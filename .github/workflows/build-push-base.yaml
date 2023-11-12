@@ -65,15 +65,15 @@ jobs:
           - base
           - trt
         cuda:
-          - cu118
           - cu121
+          - cu118
         torch:
-          - torch201
           - torch210
+          - torch201
         include:
           - target: base
             cuda: cu121
-            torch: nightly
+            torch: torchnightly
 
     steps:
       - name: Checkout

@@ -123,7 +123,7 @@ target "base" {
         version  = "2.1.0"
         index    = "https://download.pytorch.org/whl/test"
         triton   = ""
-        xformers = ""
+        xformers = "xformers"
       },
       {
         version  = "nightly"
@@ -137,6 +137,11 @@ target "base" {
         name     = "cu118"
         version  = "11.8.0"
         with-trt = false
+      },
+      {
+        name     = "cu118"
+        version  = "11.8.0"
+        with-trt = true
       },
       {
         name     = "cu121"
