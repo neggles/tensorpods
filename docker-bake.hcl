@@ -75,7 +75,15 @@ function repoImage {
 # cursed override for cuda 12.1 on torch 2.0.1...
 function torchIndex {
   params = [base, version, cuda]
-  result = and(equal(version, "2.0.1"), equal(cuda, "12.1.1")) ? "${base}/cu118" : "${base}/${cudaName(cuda)}"
+  result = (
+    equal(base, "")
+    ? "https://pypi.org/simple"
+    : (
+      and(equal(version, "2.0.1"), equal(cuda, "12.1.1"))
+      ? "${base}/cu118"
+      : "${base}/${cudaName(cuda)}"
+    )
+  )
 }
 
 # set to "true" by github actions, used to disable auto-tag
@@ -121,7 +129,7 @@ target "base" {
       },
       {
         version  = "2.1.0"
-        index    = "https://pypi.org/simple"
+        index    = ""
         triton   = ""
         xformers = "xformers>=0.0.22"
       },
