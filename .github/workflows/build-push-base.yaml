@@ -70,9 +70,12 @@ jobs:
           - torch210
           - torch201
         include:
-          - target: base
-            cuda: cu121
-            torch: torchnightly
+          # - target: base
+          #   cuda: cu121
+          #   torch: torchnightly
+          - target: coreweave
+            cuda: cu118
+            torch: torch210
 
     steps:
       - name: Checkout

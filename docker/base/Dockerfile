@@ -166,9 +166,9 @@ FROM base as xformers-binary
 
 # Install xformers
 ARG XFORMERS_PACKAGE="xformers"
-ARG EXTRA_PIP_ARGS=" "
+ARG XFORMERS_PIP_ARGS=""
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python -m pip install ${EXTRA_PIP_ARGS} "${XFORMERS_PACKAGE}"
+    python -m pip install ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}"
 
 
 # or if xformers has to be compiled; flash attention 2 makes this impossible

@@ -79,7 +79,7 @@ function torchIndex {
     equal(base, "")
     ? "https://pypi.org/simple"
     : (
-      and(equal(version, "2.0.1"), equal(cuda, "12.1.1"))
+      and(equal(version, "2.0.1"), or(equal(cuda, "12.1.1"), equal(cuda, "12.0.1")))
       ? "${base}/cu118"
       : "${base}/${cudaName(cuda)}"
     )
@@ -147,8 +147,8 @@ target "base" {
         with-trt = false
       },
       {
-        name     = "cu118"
-        version  = "11.8.0"
+        name     = "cu120"
+        version  = "12.0.1"
         with-trt = true
       },
       {
@@ -180,30 +180,41 @@ target xformers-wheel {
   inherits = ["base-cu121-torch210"]
   target   = "xformers-wheel"
   tags = [
-    repoImage("xformers", "v0.0.21", cudaName("12.1.1"), torchName("2.1.0"))
+    repoImage("xformers", "v0.0.24", cudaName("12.1.1"), torchName("2.1.0"))
   ]
   args = {
     XFORMERS_REPO = "https://github.com/neggles/xformers.git"
-    XFORMERS_REF  = "tensorpods-v0.0.21"
+    XFORMERS_REF  = "tensorpods-v0.0.24"
   }
 }
 
-target local-torchrc {
-  inherits = ["xformers-wheel"]
-  target   = "xformers-source"
-  tags = [
-    repoImage("base", cudaName("12.1.1"), torchName("2.1.0"))
-  ]
-}
-
 target local-torchrelease {
-  inherits = ["base-cu121-torch201"]
+  inherits = ["base-cu121-torch210"]
   target   = "xformers-binary"
   tags = [
     repoImage("base", cudaName("12.1.1"), torchName("2.1.0"))
   ]
+  args = {}
+}
+
+target coreweave-cu118-torch210 {
+  inherits = ["base-cu118-torch210"]
+  target   = "xformers-binary"
+  tags = [
+    repoImage("base", cudaName("11.8.0"), torchName("2.1.0"))
+  ]
   args = {
-    XFORMERS_REPO = "https://github.com/neggles/xformers.git"
-    XFORMERS_REF  = "tensorpods-v0.0.21"
+    XFORMERS_PIP_ARGS = "--index-url https://download.pytorch.org/whl/cu118"
+  }
+}
+
+target coreweave-cu120-torch210 {
+  inherits = ["base-cu118-torch210"]
+  target   = "xformers-binary"
+  tags = [
+    repoImage("base", cudaName("12.0.1"), torchName("2.1.0"))
+  ]
+  args = {
+    XFORMERS_PIP_ARGS = "--index-url https://download.pytorch.org/whl/cu118"
   }
 }
