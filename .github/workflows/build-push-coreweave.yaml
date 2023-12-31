@@ -1,5 +1,5 @@
-name: Base Image
-run-name: Base (via ${{ github.event_name }})
+name: Coreweave Image
+run-name: Coreweave (via ${{ github.event_name }})
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - "main"
       - "release"
     paths:
-      - ".github/workflows/build-push-base.yaml"
+      - ".github/workflows/build-push-coreweave.yaml"
       - "docker/base/*"
       - "docker-bake.hcl"
       - "docker-compose.base.yml"
@@ -23,7 +23,7 @@ on:
 
   pull_request:
     paths:
-      - ".github/workflows/build-push-base.yaml"
+      - ".github/workflows/build-push-coreweave.yaml"
       - "docker/base/*"
       - "docker-bake.hcl"
       - "docker-compose.base.yml"
@@ -34,7 +34,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-base
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-coreweave
   cancel-in-progress: true
 
 env:
@@ -61,17 +61,12 @@ jobs:
       max-parallel: 1
       matrix:
         target:
-          - base
-          - trt
+          - coreweave
         cuda:
-          - cu121
+          - cu118
+          - cu120
         torch:
           - torch210
-          - torch201
-        # include:
-        # - target: base
-        #   cuda: cu121
-        #   torch: torchnightly
 
     steps:
       - name: Checkout
