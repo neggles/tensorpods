@@ -204,6 +204,7 @@ target coreweave-cu118-torch210 {
   inherits = ["base-cu118-torch210"]
   target   = "xformers-binary"
   args = {
+    TORCH_INDEX       = "https://download.pytorch.org/whl/cu118"
     XFORMERS_PIP_ARGS = "--index-url https://download.pytorch.org/whl/cu118"
   }
 }
@@ -212,6 +213,7 @@ target coreweave-cu120-torch210 {
   inherits = ["base-cu120-torch210"]
   target   = "xformers-binary"
   args = {
+    TORCH_INDEX       = "https://download.pytorch.org/whl/cu118"
     XFORMERS_PIP_ARGS = "--index-url https://download.pytorch.org/whl/cu118"
   }
 }
