@@ -203,20 +203,14 @@ target local-torchrelease {
 target coreweave-cu118-torch210 {
   inherits = ["base-cu118-torch210"]
   target   = "xformers-binary"
-  tags = [
-    repoImage("base", cudaName("11.8.0"), torchName("2.1.0"))
-  ]
   args = {
     XFORMERS_PIP_ARGS = "--index-url https://download.pytorch.org/whl/cu118"
   }
 }
 
 target coreweave-cu120-torch210 {
-  inherits = ["base-cu118-torch210"]
+  inherits = ["base-cu120-torch210"]
   target   = "xformers-binary"
-  tags = [
-    repoImage("base", cudaName("12.0.1"), torchName("2.1.0"))
-  ]
   args = {
     XFORMERS_PIP_ARGS = "--index-url https://download.pytorch.org/whl/cu118"
   }
