@@ -1,5 +1,5 @@
 name: Coreweave Image
-run-name: Coreweave (via ${{ github.event_name }})
+run-name: Coreweave via ${{ github.event_name }}
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
       - ".github/workflows/build-push-coreweave.yaml"
       - "docker/base/*"
       - "docker-bake.hcl"
-      - "docker-compose.base.yml"
+      - "docker-compose.yml"
       - "!**.md"
 
   workflow_dispatch:
@@ -26,7 +26,7 @@ on:
       - ".github/workflows/build-push-coreweave.yaml"
       - "docker/base/*"
       - "docker-bake.hcl"
-      - "docker-compose.base.yml"
+      - "docker-compose.yml"
       - "!**.md"
 
 defaults:
