@@ -59,7 +59,8 @@ function cudaRelease {
 # torch version to torch name
 function torchName {
   params = [version]
-  result = regex_replace(version, "^(\\d+)\\.(\\d+)\\.(\\d+).*", "torch$1$20")
+  # this is cursed, but if i try to do torch$1$20 it will interpret "$2 0" as $20
+  result = join("", [regex_replace(version, "^(\\d+)\\.(\\d+)\\.(\\d+).*", "torch$1$2"), "0"])
 }
 # torch version to torch name
 function torchSpec {
