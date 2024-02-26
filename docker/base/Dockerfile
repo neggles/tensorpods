@@ -137,12 +137,11 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 # Install PyTorch
 ARG TORCH_INDEX
 ARG TORCH_PACKAGE="torch"
-ARG TRITON_PACKAGE=" "
 ARG EXTRA_PIP_ARGS=" "
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python -m pip install ${EXTRA_PIP_ARGS:-} \
-      ${TORCH_PACKAGE} \
-      ${TRITON_PACKAGE} \
+      "${TORCH_PACKAGE}" \
+      triton \
       torchaudio \
       torchvision \
       --index-url "${TORCH_INDEX}"

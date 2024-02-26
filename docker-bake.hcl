@@ -59,7 +59,12 @@ function cudaRelease {
 # torch version to torch name
 function torchName {
   params = [version]
-  result = regex_replace(version, "^(\\d+)\\.(\\d+)\\.(\\d+).*", "torch$1$2$3")
+  result = regex_replace(version, "^(\\d+)\\.(\\d+)\\.(\\d+).*", "torch$1$20")
+}
+# torch version to torch name
+function torchSpec {
+  params = [version]
+  result = regex_replace(version, "^(\\d+)\\.(\\d+).*", "torch~=$1.$2.$3")
 }
 
 # build a tag for an image from this repo
@@ -127,13 +132,11 @@ target "base" {
       {
         version  = "2.1.0"
         index    = "https://download.pytorch.org/whl"
-        triton   = ""
         xformers = "xformers>=0.0.22"
       },
       {
         version  = "2.2.0"
         index    = ""
-        triton   = ""
         xformers = "xformers>=0.0.24"
       },
     ],
@@ -166,8 +169,7 @@ target "base" {
     CUDA_RELEASE = cudaRelease(cuda.version)
 
     TORCH_INDEX      = torchIndex(torch.index, torch.version, cuda.version)
-    TORCH_PACKAGE    = "torch"
-    TRITON_PACKAGE   = torch.triton
+    TORCH_PACKAGE    = torchSpec(torch.version)
     XFORMERS_PACKAGE = torch.xformers
     INCLUDE_TRT      = cuda.with-trt
   }
