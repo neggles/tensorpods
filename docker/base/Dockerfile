@@ -167,8 +167,8 @@ FROM base as xformers-binary
 ARG XFORMERS_PACKAGE="xformers"
 ARG XFORMERS_PIP_ARGS=""
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python -m pip install ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}"
-
+    python -m pip install ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}" \
+    || python -m pip install --pre ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}"
 
 # or if xformers has to be compiled; flash attention 2 makes this impossible
 # on a public github actions runner without limiting yourself to only a handful of architectures
