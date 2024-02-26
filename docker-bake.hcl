@@ -119,8 +119,8 @@ target "common" {
 target "base" {
   name = stripName(
     cuda.with-trt
-    ? "trt-${cuda.name}-torch${torch.version}"
-    : "base-${cuda.name}-torch${torch.version}"
+    ? "trt-${cuda.name}-${torchName(torch.version)}"
+    : "base-${cuda.name}-${torchName(torch.version)}"
   )
   inherits = ["common", "docker-metadata-action"]
   context  = "docker/base"
