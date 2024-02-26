@@ -58,7 +58,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 2
       matrix:
         target:
           - base
@@ -66,8 +66,8 @@ jobs:
         cuda:
           - cu121
         torch:
+          - torch220
           - torch210
-          - torch201
         # include:
         # - target: base
         #   cuda: cu121
@@ -76,18 +76,18 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           platforms: ${{ env.IMAGE_PLATFORMS }}
 
       - name: Log in to GHCR
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.IMAGE_REGISTRY }}
           username: ${{ github.actor }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Build & Push Image
         id: build-push
-        uses: docker/bake-action@v3
+        uses: docker/bake-action@v4
         with:
           targets: ${{ matrix.target }}-${{ matrix.cuda }}-${{ matrix.torch }}
           files: |
