@@ -131,7 +131,7 @@ target "base" {
         xformers = "xformers>=0.0.22"
       },
       {
-        version  = "2.2.1"
+        version  = "2.2.0"
         index    = ""
         triton   = ""
         xformers = "xformers>=0.0.24"
