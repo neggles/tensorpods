@@ -64,7 +64,7 @@ function torchName {
 # torch version to torch name
 function torchSpec {
   params = [version]
-  result = regex_replace(version, "^(\\d+)\\.(\\d+)\\.(\\d+).*", "torch~=$1.$2.$3")
+  result = regex_replace(version, "^(\\d+)\\.(\\d+)\\.(\\d+).*", "torch==$1.$2.$3")
 }
 
 # build a tag for an image from this repo
@@ -130,7 +130,7 @@ target "base" {
   matrix = {
     torch = [
       {
-        version  = "2.1.0"
+        version  = "2.1.1"
         index    = "https://download.pytorch.org/whl"
         xformers = "xformers>=0.0.22"
       },
