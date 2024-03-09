@@ -192,7 +192,8 @@ target local-torchrelease {
   inherits = ["base-cu121-torch220"]
   target   = "xformers-binary"
   tags = [
-    repoImage("base", cudaName("12.1.1"), torchName("2.2.0"))
+    repoImage("base", cudaName("12.1.1"), torchName("2.2.0")),
+    repoImage("base", "latest"),
   ]
   args = {}
 }
