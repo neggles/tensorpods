@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1
-# Path: base/Dockerfile
 
 # Default upstream image for when not using buildx
 ARG BASE_IMAGE=nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
@@ -124,13 +123,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     libglx-dev \
   && apt-get clean
 
-# upgrade pip
+# upgrade pip/wheel but don't upgrade setuptools; avoids issues with Ubuntu-provided module
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --upgrade \
-    pip \
-    wheel
+    pip install --upgrade pip wheel
 
-# add the nVidia python index
+# add the nVidia python index package
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python -m pip install nvidia-pyindex
 
@@ -147,15 +144,14 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
       --index-url "${TORCH_INDEX}"
 
 # save and enforce a constraint file to lock the torch version
-RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python -m pip freeze | grep -E '(^torch|triton)' > /torch-constraints.txt \
-    && echo "-----------------------------" \
-    && echo "Created torch constraint file:" \
-    && cat /torch-constraints.txt \
-    && echo "-----------------------------"
-ENV PIP_CONSTRAINT=/torch-constraints.txt
+RUN echo "Creating pip constraint at /etc/pip/constraints.txt to lock PyTorch module versions..." \
+    && mkdir -p /etc/pip \
+    && python -m pip freeze | grep -E '(^torch|triton|xformers)' | tee /etc/pip/constraints.txt \
+    && echo "Adding constraint file to config in /etc/pip.conf" \
+    && echo -e "[global]\nconstraint = /etc/pip/constraints.txt" | tee /etc/pip.conf
+ENV PIP_CONSTRAINT=/etc/pip/constraint.txt
 
-# we do a little entrypoint setup
+# do a little entrypoint setup
 WORKDIR /workspace
 CMD ["/bin/bash", "-l"]
 
@@ -174,9 +170,16 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 # on a public github actions runner without limiting yourself to only a handful of architectures
 FROM base AS xformers-builder
 
-ARG XFORMERS_BUILD_TYPE=Release
+# acquire global args
 ARG MAX_JOBS=1
 ARG NVCC_THREADS=1
+ARG TORCH_CUDA_ARCH_LIST
+
+# Set them as environment variables
+ENV MAX_JOBS=${MAX_JOBS}
+ENV NVCC_THREADS=${NVCC_THREADS}
+ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
+
 
 # clone repo and change dir
 ARG XFORMERS_REPO=https://github.com/facebookresearch/xformers.git
@@ -190,12 +193,10 @@ RUN export BUILD_VERSION=$(python packaging/compute_wheel_version.py)
 ENV BUILD_VERSION=${BUILD_VERSION}
 
 # build xformers and output to /xformers for later extraction
-ENV MAX_JOBS=${MAX_JOBS}
-ENV NVCC_THREADS=${NVCC_THREADS}
+ARG XFORMERS_BUILD_TYPE=Release
 ENV XFORMERS_BUILD_TYPE=${XFORMERS_BUILD_TYPE}
-RUN rm -fr /xformers \
-    && mkdir -p /xformers \
-    && nice -n20 python setup.py bdist_wheel -d /xformers
+RUN rm -fr /xformers && mkdir -p /xformers \
+    && nice -n15 python setup.py bdist_wheel -d /xformers
 
 # test install wheel
 RUN python -m pip install --no-cache /xformers/*.whl
@@ -204,9 +205,11 @@ RUN python -m pip install --no-cache /xformers/*.whl
 FROM scratch AS xformers-wheel
 COPY --from=xformers-builder /xformers/*.whl /xformers/
 
-# install the wheel we just built
+
+# Final image using xformers built from source
 FROM base AS xformers-source
 
+# install the wheel we just built
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,from=xformers-wheel,source=/xformers,target=/xformers \
     python -m pip install /xformers/*.whl
