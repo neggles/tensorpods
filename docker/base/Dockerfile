@@ -124,7 +124,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   && apt-get clean
 
 # upgrade pip/wheel but don't upgrade setuptools; avoids issues with Ubuntu-provided module
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     pip install --upgrade pip wheel
 
 # add the nVidia python index package
