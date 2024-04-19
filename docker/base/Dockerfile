@@ -149,7 +149,7 @@ RUN echo "Creating pip constraint at /etc/pip/constraints.txt to lock PyTorch mo
     && python -m pip freeze | grep -E '(^torch|triton|xformers)' | tee /etc/pip/constraints.txt \
     && echo "Adding constraint file to config in /etc/pip.conf" \
     && echo -e "[global]\nconstraint = /etc/pip/constraints.txt" | tee /etc/pip.conf
-ENV PIP_CONSTRAINT=/etc/pip/constraint.txt
+ENV PIP_CONSTRAINT=/etc/pip/constraints.txt
 
 # do a little entrypoint setup
 WORKDIR /workspace
