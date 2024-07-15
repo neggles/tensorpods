@@ -142,7 +142,7 @@ target "base" {
       {
         version  = "2.2.0"
         index    = "https://download.pytorch.org/whl"
-        xformers = "xformers>=0.0.27"
+        xformers = "xformers>=0.0.24"
       },
       {
         version  = "2.3.1"
