@@ -191,7 +191,7 @@ target "base" {
 }
 
 target xformers-wheel {
-  inherits = ["base-cu121-torch240"]
+  inherits = ["base-cu124-torch240"]
   target   = "xformers-wheel"
   tags = [
     repoImage("xformers", "v0.0.27", cudaName("12.4.1"), torchName("2.4.0"))

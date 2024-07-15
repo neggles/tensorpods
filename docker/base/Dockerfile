@@ -91,12 +91,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     python3-venv\
   && apt-get clean
 
-# Install CUDNN dev package to match existing binary package
+# Install CUDNN dev package to match existing binary package (if installed)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update \
-  && apt-get -y install --no-install-recommends \
-    libcudnn8-dev=$(dpkg-query --showformat='${Version}' --show libcudnn8) \
+  && if $(dpkg-query --show libcudnn8 2>&1 >/dev/null); then  \
+    apt-get -y install --no-install-recommends \
+        libcudnn8-dev=$(dpkg-query --showformat='${Version}' --show libcudnn8) \
+    ; fi \
+  && if $(dpkg-query --show libcudnn9 2>&1 >/dev/null); then  \
+    apt-get -y install --no-install-recommends \
+        libcudnn9-dev=$(dpkg-query --showformat='${Version}' --show libcudnn9) \
+    ; fi \
   && apt-get clean
 
 # Install TensorRT libraries
