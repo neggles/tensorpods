@@ -99,9 +99,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get -y install --no-install-recommends \
         libcudnn8-dev=$(dpkg-query --showformat='${Version}' --show libcudnn8) \
     ; fi \
-  && if $(dpkg-query --show libcudnn9 2>&1 >/dev/null); then  \
+  && if $(dpkg-query --show libcudnn9-cuda-12 2>&1 >/dev/null); then  \
     apt-get -y install --no-install-recommends \
-        libcudnn9-dev=$(dpkg-query --showformat='${Version}' --show libcudnn9) \
+        libcudnn9-dev-cuda-12=$(dpkg-query --showformat='${Version}' --show libcudnn9-cuda-12) \
     ; fi \
   && apt-get clean
 
