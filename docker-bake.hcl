@@ -17,7 +17,7 @@ variable "IMAGE_NAMESPACE" {
 
 variable TORCH_CUDA_ARCH_LIST {
   # sorry pascal users but your cards are no good here
-  default = "7.0;7.5;8.0;8.6;8.9;9.0"
+  default = "7.5;8.0;8.6;8.9;9.0"
 }
 
 variable MAX_JOBS {
@@ -131,15 +131,20 @@ target "base" {
   matrix = {
     torch = [
       {
-        version  = "2.1.1"
-        index    = "https://download.pytorch.org/whl"
-        xformers = "xformers>=0.0.22"
-      },
-      {
         version  = "2.2.0"
         index    = "https://download.pytorch.org/whl"
-        xformers = "xformers>=0.0.24"
+        xformers = "xformers>=0.0.27"
       },
+      {
+        version  = "2.3.0"
+        index    = "https://pypi.org/simple"
+        xformers = "xformers>=0.0.27"
+      },
+      {
+        version  = "2.4.0"
+        index    = "https://download.pytorch.org/whl/test/cu124"
+        xformers = ""
+      }
     ],
     cuda = [
       {
@@ -158,10 +163,10 @@ target "base" {
         with-trt = false
       },
       {
-        name     = "cu121"
-        version  = "12.1.1"
-        with-trt = true
-      }
+        name     = "cu124"
+        version  = "12.4.1"
+        with-trt = false
+      },
     ]
   }
   args = {
@@ -177,19 +182,19 @@ target "base" {
 }
 
 target xformers-wheel {
-  inherits = ["base-cu121-torch220"]
+  inherits = ["base-cu121-torch240"]
   target   = "xformers-wheel"
   tags = [
-    repoImage("xformers", "v0.0.24", cudaName("12.1.1"), torchName("2.2.0"))
+    repoImage("xformers", "v0.0.27", cudaName("12.4.1"), torchName("2.4.0"))
   ]
   args = {
     XFORMERS_REPO = "https://github.com/neggles/xformers.git"
-    XFORMERS_REF  = "tensorpods-v0.0.24"
+    XFORMERS_REF  = "tensorpods-v0.0.27"
   }
 }
 
 target local-torchrelease {
-  inherits = ["base-cu121-torch220"]
+  inherits = ["base-cu121-torch230"]
   target   = "xformers-binary"
   tags = [
     repoImage("base", cudaName("12.1.1"), torchName("2.2.0")),
@@ -198,8 +203,8 @@ target local-torchrelease {
   args = {}
 }
 
-target coreweave-cu120-torch220 {
-  inherits = ["base-cu120-torch220"]
+target coreweave-cu120-torch230 {
+  inherits = ["base-cu120-torch230"]
   target   = "xformers-binary"
   args = {
     TORCH_INDEX       = "https://download.pytorch.org/whl/cu118"
@@ -208,8 +213,8 @@ target coreweave-cu120-torch220 {
 }
 
 
-target coreweave-cu121-torch220 {
-  inherits = ["base-cu121-torch220"]
+target coreweave-cu124-torch230 {
+  inherits = ["base-cu124-torch230"]
   target   = "xformers-binary"
   args = {
     TORCH_INDEX       = "https://pypi.org/simple"

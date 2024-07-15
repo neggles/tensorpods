@@ -61,16 +61,13 @@ jobs:
       matrix:
         target:
           - base
-          - trt
         cuda:
           - cu121
+          - cu124
         torch:
           - torch220
-          - torch210
-        # include:
-        # - target: base
-        #   cuda: cu121
-        #   torch: torchnightly
+          - torch230
+          - torch240
 
     steps:
       - name: Checkout
