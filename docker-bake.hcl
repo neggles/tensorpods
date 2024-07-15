@@ -82,7 +82,7 @@ function repoImage {
 function torchIndex {
   params = [index, version, cuda]
   result = (
-    and(equal(version, "2.2.0"), equal(cuda, "12.1.1"))
+    and(equal(version, "2.3.1"), equal(cuda, "12.1.1"))
     ? "https://pypi.org/simple"
     : (
       or(
