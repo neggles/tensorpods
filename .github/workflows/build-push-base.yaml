@@ -62,12 +62,13 @@ jobs:
         target:
           - base
         cuda:
-          - cu121
           - cu124
         torch:
-          - torch220
-          - torch230
-          - torch240
+          - torch250
+        include:
+          - target: base
+            cuda: cu126
+            torch: torch260
 
     steps:
       - name: Checkout

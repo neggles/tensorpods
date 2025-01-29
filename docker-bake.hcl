@@ -17,7 +17,7 @@ variable "IMAGE_NAMESPACE" {
 
 variable TORCH_CUDA_ARCH_LIST {
   # sorry pascal users but your cards are no good here
-  default = "7.5;8.0;8.6;8.9;9.0"
+  default = "8.0;8.6;8.9;9.0"
 }
 
 variable MAX_JOBS {
@@ -36,11 +36,11 @@ function stripName {
 
 # convert a CUDA version number and container dev type etc. into an image URI
 function cudaImage {
-  params          = [cudaVer, cudaType]
+  params          = [cudaVer, cudaType, distro]
   variadic_params = extraVals
   result = join(":", [
     "nvidia/cuda",
-    join("-", [cudaVer], extraVals, [cudaType, "ubuntu22.04"])
+    join("-", [cudaVer], extraVals, [cudaType, distro])
   ])
 }
 
@@ -82,16 +82,9 @@ function repoImage {
 function torchIndex {
   params = [index, version, cuda]
   result = (
-    and(equal(version, "2.3.1"), equal(cuda, "12.1.1"))
+    and(equal(version, "2.5.1"), equal(cuda, "12.4.1"))
     ? "https://pypi.org/simple"
-    : (
-      or(
-        and(equal(version, "2.1.0"), notequal(cuda, "12.1.1")),
-        and(equal(version, "2.2.0"), notequal(cuda, "12.1.1"))
-      )
-      ? "${index}/cu118"
-      : "${index}/${cudaName(cuda)}"
-    )
+    : "${index}/${cudaName(cuda)}"
   )
 }
 
@@ -126,56 +119,42 @@ target "common" {
 }
 
 target "base" {
-  name = stripName(
-    cuda.with-trt
-    ? "trt-${cuda.name}-${torchName(torch.version)}"
-    : "base-${cuda.name}-${torchName(torch.version)}"
-  )
+  name     = stripName("base-${cuda.name}-${torchName(torch.version)}")
   inherits = ["common", "docker-metadata-action"]
   context  = "docker/base"
   target   = equal(torch.xformers, "") ? "base" : "xformers-binary"
   contexts = {
-    base-cuda = "docker-image://${cudaImage(cuda.version, "devel", cudnnTag(cuda.version))}"
+    base-cuda = "docker-image://${cudaImage(cuda.version, "devel", cuda.distro, cudnnTag(cuda.version))}"
   }
   matrix = {
     torch = [
       {
-        version  = "2.2.0"
-        index    = "https://download.pytorch.org/whl"
-        xformers = "xformers>=0.0.24"
-      },
-      {
-        version  = "2.3.1"
-        index    = "https://pypi.org/simple"
-        xformers = "xformers>=0.0.27"
-      },
-      {
         version  = "2.4.0"
-        index    = "https://download.pytorch.org/whl/test/cu124"
+        index    = "https://download.pytorch.org/whl"
+        xformers = "xformers>=0.0.28"
+      },
+      {
+        version  = "2.5.1"
+        index    = "https://pypi.org/simple"
+        xformers = "xformers>=0.0.29.post1"
+      },
+      {
+        version  = "2.6.0"
+        index    = "https://download.pytorch.org/whl"
         xformers = ""
       }
     ],
     cuda = [
       {
-        name     = "cu118"
-        version  = "11.8.0"
-        with-trt = false
+        name    = "cu124"
+        version = "12.4.1"
+        distro  = "ubuntu22.04"
       },
       {
-        name     = "cu120"
-        version  = "12.0.1"
-        with-trt = false
-      },
-      {
-        name     = "cu121"
-        version  = "12.1.1"
-        with-trt = false
-      },
-      {
-        name     = "cu124"
-        version  = "12.4.1"
-        with-trt = false
-      },
+        name    = "cu126"
+        version = "12.6.3"
+        distro  = "ubuntu24.04"
+      }
     ]
   }
   args = {
@@ -186,47 +165,27 @@ target "base" {
     TORCH_INDEX      = torchIndex(torch.index, torch.version, cuda.version)
     TORCH_PACKAGE    = torchSpec(torch.version)
     XFORMERS_PACKAGE = torch.xformers
-    INCLUDE_TRT      = cuda.with-trt
   }
 }
 
 target xformers-wheel {
-  inherits = ["base-cu124-torch240"]
+  inherits = ["base-cu124-torch250"]
   target   = "xformers-wheel"
   tags = [
-    repoImage("xformers", "v0.0.27", cudaName("12.4.1"), torchName("2.4.0"))
+    repoImage("xformers", "v0.0.29.post1", cudaName("12.4.1"), torchName("2.5.1"))
   ]
   args = {
     XFORMERS_REPO = "https://github.com/neggles/xformers.git"
-    XFORMERS_REF  = "tensorpods-v0.0.27"
+    XFORMERS_REF  = "tensorpods-v0.0.29.post1"
   }
 }
 
 target local-torchrelease {
-  inherits = ["base-cu124-torch230"]
+  inherits = ["base-cu124-torch250"]
   target   = "xformers-binary"
   tags = [
-    repoImage("base", cudaName("12.4.1"), torchName("2.3.1")),
+    repoImage("base", cudaName("12.4.1"), torchName("2.5.1")),
     repoImage("base", "latest"),
   ]
   args = {}
-}
-
-target coreweave-cu120-torch230 {
-  inherits = ["base-cu120-torch230"]
-  target   = "xformers-binary"
-  args = {
-    TORCH_INDEX       = "https://download.pytorch.org/whl/cu118"
-    XFORMERS_PIP_ARGS = "--index-url https://download.pytorch.org/whl/cu118"
-  }
-}
-
-
-target coreweave-cu124-torch230 {
-  inherits = ["base-cu124-torch230"]
-  target   = "xformers-binary"
-  args = {
-    TORCH_INDEX       = "https://pypi.org/simple"
-    XFORMERS_PIP_ARGS = ""
-  }
 }

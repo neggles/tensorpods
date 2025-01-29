@@ -10,7 +10,7 @@ ARG PIP_PREFER_BINARY=1
 ARG TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0+PTX"
 
 # Build the base image.
-FROM ${BASE_IMAGE} as base
+FROM ${BASE_IMAGE} AS base
 
 # Set shell
 SHELL ["/bin/bash", "-ceuxo", "pipefail"]
@@ -105,18 +105,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ; fi \
   && apt-get clean
 
-# Install TensorRT libraries
-ARG INCLUDE_TRT='false'
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update \
-  && if [ "${INCLUDE_TRT}" == "true" ]; then  \
-    apt-get -y install --no-install-recommends \
-        libnvinfer-dev \
-        python3-libnvinfer-dev \
-    ; fi \
-  && apt-get clean
-
 # Install other CUDA libraries
 ARG CUDA_RELEASE
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -135,14 +123,15 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 
 # add the nVidia python index package
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python -m pip install nvidia-pyindex
+    python -m pip install nvidia-pyindex uv
 
 # Install PyTorch
 ARG TORCH_INDEX
 ARG TORCH_PACKAGE="torch"
 ARG EXTRA_PIP_ARGS=" "
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python -m pip install ${EXTRA_PIP_ARGS:-} \
+    --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv pip install --system ${EXTRA_PIP_ARGS:-} \
       "${TORCH_PACKAGE}" \
       triton \
       torchaudio \
@@ -152,7 +141,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 # save and enforce a constraint file to lock the torch version
 RUN echo "Creating pip constraint at /etc/pip/constraints.txt to lock PyTorch module versions..." \
     && mkdir -p /etc/pip \
-    && python -m pip freeze | grep -E '(^torch|triton|xformers)' | tee /etc/pip/constraints.txt \
+    && python -m pip freeze | grep -E '^(torch|triton|xformers|nvidia)' | tee /etc/pip/constraints.txt \
     && echo "Adding constraint file to config in /etc/pip.conf" \
     && echo -e "[global]\nconstraint = /etc/pip/constraints.txt" | tee /etc/pip.conf
 ENV PIP_CONSTRAINT=/etc/pip/constraints.txt
@@ -163,7 +152,7 @@ CMD ["/bin/bash", "-l"]
 
 
 # can use this target if there's a prebuilt wheel available for this torch version
-FROM base as xformers-binary
+FROM base AS xformers-binary
 
 # Install xformers
 ARG XFORMERS_PACKAGE="xformers"
@@ -171,6 +160,10 @@ ARG XFORMERS_PIP_ARGS=""
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python -m pip install ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}" \
     || python -m pip install --pre ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}"
+
+# quick sanity check
+RUN python -c "import torch; print(f'Torch version: {torch.__version__}')"
+
 
 # or if xformers has to be compiled; flash attention 2 makes this impossible
 # on a public github actions runner without limiting yourself to only a handful of architectures
