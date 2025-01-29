@@ -62,6 +62,7 @@ jobs:
         target:
           - base
         cuda:
+          - cu121
           - cu124
         torch:
           - torch250

@@ -135,7 +135,7 @@ target "base" {
       },
       {
         version  = "2.5.1"
-        index    = "https://pypi.org/simple"
+        index    = "https://download.pytorch.org/whl"
         xformers = "xformers>=0.0.29.post1"
       },
       {
@@ -145,6 +145,11 @@ target "base" {
       }
     ],
     cuda = [
+      {
+        name    = "cu121"
+        version = "12.1.1"
+        distro  = "ubuntu22.04"
+      },
       {
         name    = "cu124"
         version = "12.4.1"
@@ -185,6 +190,16 @@ target local-torchrelease {
   target   = "xformers-binary"
   tags = [
     repoImage("base", cudaName("12.4.1"), torchName("2.5.1")),
+    repoImage("base", "latest"),
+  ]
+  args = {}
+}
+
+target local-cu121 {
+  inherits = ["base-cu121-torch250"]
+  target   = "xformers-binary"
+  tags = [
+    repoImage("base", cudaName("12.1.1"), torchName("2.5.1")),
     repoImage("base", "latest"),
   ]
   args = {}
