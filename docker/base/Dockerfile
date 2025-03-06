@@ -7,7 +7,7 @@ ARG BASE_IMAGE=nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_PRIORITY=critical
 ARG PIP_PREFER_BINARY=1
-ARG TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0+PTX"
+ARG TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0+PTX"
 
 # Build the base image.
 FROM ${BASE_IMAGE} AS base
@@ -91,6 +91,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     python3-venv\
   && apt-get clean
 
+ARG CACHEBUST="busted"
+RUN echo "CACHEBUST=${CACHEBUST}"
 # Install CUDNN dev package to match existing binary package (if installed)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -119,19 +121,25 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # upgrade pip/wheel but don't upgrade setuptools; avoids issues with Ubuntu-provided module
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    pip install --upgrade pip wheel
+    pip install --upgrade pip wheel packaging
 
 # add the nVidia python index package
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python -m pip install nvidia-pyindex uv
 
+# Enable bytecode compilation
+#ENV UV_COMPILE_BYTECODE=1
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
+# use system python (no venv)
+ENV UV_SYSTEM_PYTHON=1
+
 # Install PyTorch
 ARG TORCH_INDEX
 ARG TORCH_PACKAGE="torch"
 ARG EXTRA_PIP_ARGS=" "
-RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    --mount=type=cache,target=/root/.cache/uv,sharing=locked \
-    uv pip install --system ${EXTRA_PIP_ARGS:-} \
+RUN --mount=type=cache,id=cache/uv,target=/root/.cache/uv \
+    uv pip install ${EXTRA_PIP_ARGS:-} \
       "${TORCH_PACKAGE}" \
       triton \
       torchaudio \
@@ -157,13 +165,15 @@ FROM base AS xformers-binary
 # Install xformers
 ARG XFORMERS_PACKAGE="xformers"
 ARG XFORMERS_PIP_ARGS=""
-RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python -m pip install ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}" \
-    || python -m pip install --pre ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}"
+RUN --mount=type=cache,id=cache/uv,target=/root/.cache/uv \
+    uv pip install ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}" \
+    || uv pip install --pre ${XFORMERS_PIP_ARGS} "${XFORMERS_PACKAGE}"
 
 # quick sanity check
 RUN python -c "import torch; print(f'Torch version: {torch.__version__}')"
 
+# make sure uv lock files are cleaned
+RUN rm -f /tmp/uv*.lock
 
 # or if xformers has to be compiled; flash attention 2 makes this impossible
 # on a public github actions runner without limiting yourself to only a handful of architectures
@@ -183,8 +193,12 @@ ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
 # clone repo and change dir
 ARG XFORMERS_REPO=https://github.com/facebookresearch/xformers.git
 ARG XFORMERS_REF=main
-RUN git clone --recursive --shallow-submodules --single-branch \
-    --branch "${XFORMERS_REF}" "${XFORMERS_REPO}" "xformers"
+RUN git clone \
+    --recursive \
+    --shallow-submodules \
+    --single-branch \
+    --branch "${XFORMERS_REF}" \
+    "${XFORMERS_REPO}" "xformers"
 WORKDIR /workspace/xformers
 
 # calculate version
@@ -198,7 +212,8 @@ RUN rm -fr /xformers && mkdir -p /xformers \
     && nice -n15 python setup.py bdist_wheel -d /xformers
 
 # test install wheel
-RUN python -m pip install --no-cache /xformers/*.whl
+RUN --mount=type=cache,id=cache/uv,target=/root/.cache/uv \
+    uv pip install /xformers/*.whl
 
 # wheel-only image
 FROM scratch AS xformers-wheel
@@ -209,8 +224,8 @@ COPY --from=xformers-builder /xformers/*.whl /xformers/
 FROM base AS xformers-source
 
 # install the wheel we just built
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,from=xformers-wheel,source=/xformers,target=/xformers \
-    python -m pip install /xformers/*.whl
+    uv pip install /xformers/*.whl
 
 # fin.

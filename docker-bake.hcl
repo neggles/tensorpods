@@ -141,7 +141,7 @@ target "base" {
       {
         version  = "2.6.0"
         index    = "https://download.pytorch.org/whl"
-        xformers = ""
+        xformers = "xformers>=0.0.29.post2"
       }
     ],
     cuda = [
@@ -186,10 +186,10 @@ target xformers-wheel {
 }
 
 target local-torchrelease {
-  inherits = ["base-cu124-torch250"]
+  inherits = ["base-cu124-torch260"]
   target   = "xformers-binary"
   tags = [
-    repoImage("base", cudaName("12.4.1"), torchName("2.5.1")),
+    repoImage("base", cudaName("12.4.1"), torchName("2.6.0")),
     repoImage("base", "latest"),
   ]
   args = {}
